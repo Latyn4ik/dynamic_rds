@@ -9,18 +9,26 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+env:
+  AWS_REGION: "us-east-1"
+  OIDC_AWS_ROLE_TO_ASSUME: "arn:aws:iam::637594911457:role/github_oidc_role"
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.OIDC_AWS_ROLE_TO_ASSUME }}
+          aws-region:  ${{ env.AWS_REGION }}
 
-      - name: Run a multi-line script
+      - name:  Copy index.html to s3
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          aws s3 ls

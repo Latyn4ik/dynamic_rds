@@ -24,7 +24,7 @@ data "aws_iam_policy_document" "github_actions_oidc" {
 
     condition {
       test     = "StringLike"
-      values   = ["repo:Latyn4ik/dynamic_rds/*"]
+      values   = ["repo:Latyn4ik/dynamic_rds:*"]
       variable = "token.actions.githubusercontent.com:sub"
     }
   }

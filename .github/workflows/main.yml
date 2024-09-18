@@ -33,6 +33,6 @@ jobs:
           role-to-assume: ${{ env.OIDC_AWS_ROLE_TO_ASSUME }}
           aws-region:  ${{ env.AWS_REGION }}
 
-      - name:  Copy index.html to s3
+      - name: Just test
         run: |
           aws s3 ls

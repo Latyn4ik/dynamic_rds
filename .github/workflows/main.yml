@@ -10,8 +10,9 @@ on:
   workflow_dispatch:
 
 env:
-  AWS_REGION: "us-east-1"
+  AWS_REGION: "eu-central-1"
   OIDC_AWS_ROLE_TO_ASSUME: "arn:aws:iam::637594911457:role/github_oidc_role"
+  SOURCE_RDS_SNAPSHOT_ID: "dev-portal-postgres-main-0"
 
 
 
@@ -20,7 +21,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  create_rds_snapshots:
     runs-on: ubuntu-latest
 
 
@@ -33,6 +34,6 @@ jobs:
           role-to-assume: ${{ env.OIDC_AWS_ROLE_TO_ASSUME }}
           aws-region:  ${{ env.AWS_REGION }}
 
-      - name: Just test.
+      - name: Create RDS snapshot
         run: |
-          aws s3 ls
+          aws rds create-db-snapshot --db-snapshot-identifier test123 --db-instance-identifier ${{ env.SOURCE_RDS_SNAPSHOT_ID }} 

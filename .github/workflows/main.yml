@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 env:
-  AWS_REGION: "eu-central-1"
+  SOURCE_AWS_REGION: "eu-central-1"
   OIDC_AWS_ROLE_TO_ASSUME: "arn:aws:iam::637594911457:role/github_oidc_role"
   SOURCE_RDS_ID: "dev-portal-postgres-main-0"
   NEW_RDS_SNAPSHOT_NAME_PREFIX: "transit-rds-snapshot"
@@ -33,12 +33,36 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.OIDC_AWS_ROLE_TO_ASSUME }}
-          aws-region:  ${{ env.AWS_REGION }}
+          aws-region:  ${{ env.SOURCE_AWS_REGION }}
 
       - name: Create RDS snapshot
+        id: create_snapshot
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           SNAPSHOT_ID="${{ env.NEW_RDS_SNAPSHOT_NAME_PREFIX }}-default-encrypted-${TIMESTAMP}"
           aws rds create-db-snapshot \
             --db-snapshot-identifier ${SNAPSHOT_ID} \
             --db-instance-identifier ${{ env.SOURCE_RDS_ID }}
+
+          echo "::set-output name=snapshot_id::${SNAPSHOT_ID}"
+
+
+
+      - name: Wait for snapshot to become available
+        id: wait_for_snapshot
+        run: |
+          SNAPSHOT_ID=${{ steps.create_snapshot.outputs.snapshot_id }}
+          STATUS=""
+          while [ "$STATUS" != "available" ]; do
+            echo "Checking status of snapshot: $SNAPSHOT_ID"
+            STATUS=$(aws rds describe-db-snapshots \
+              --db-snapshot-identifier ${SNAPSHOT_ID} \
+              --query 'DBSnapshots[0].Status' \
+              --output text)
+            echo "Current status: $STATUS"
+            if [ "$STATUS" != "available" ]; then
+              echo "Snapshot is not yet available, waiting 60 seconds..."
+              sleep 60
+            fi
+          done
+          echo "Snapshot ${SNAPSHOT_ID} is now available!"

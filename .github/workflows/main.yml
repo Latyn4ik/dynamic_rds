@@ -16,6 +16,7 @@ env:
 
   TARGET_AWS_ACCOUNT_ID: "430151838095" # AWS account id with which the encrypted RDS snapshot will be shared and where the new RDS instance will be deployed
   TARGET_AWS_REGION: "us-east-2" # The region in which to place the encrypted RDS snapshot and where the new RDS instance will be deployed
+  TARGET_OIDC_AWS_ROLE_TO_ASSUME: "mock"
   TARGET_RDS_ID: "test3R3R3" # The name for the new RDS instance that will be created based on the encrypted RDS snapshot
 
   NEW_RDS_SNAPSHOT_NAME_PREFIX: "transit-rds-snapshot"
@@ -31,7 +32,6 @@ jobs:
   create_rds_snapshots:
     runs-on: ubuntu-24.04
 
-
     steps:
       - uses: actions/checkout@v4
 
@@ -41,18 +41,17 @@ jobs:
           role-to-assume: ${{ env.SOURCE_OIDC_AWS_ROLE_TO_ASSUME }}
           aws-region:  ${{ env.SOURCE_AWS_REGION }}
 
+
       - name: Create RDS snapshot
         id: create_snapshot
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          SNAPSHOT_ID="${{ env.NEW_RDS_SNAPSHOT_NAME_PREFIX }}-default-encrypted-${TIMESTAMP}"
+          SNAPSHOT_ID="${{ env.NEW_RDS_SNAPSHOT_NAME_PREFIX }}-${TIMESTAMP}"
           aws rds create-db-snapshot \
             --db-snapshot-identifier ${SNAPSHOT_ID} \
             --db-instance-identifier ${{ env.SOURCE_RDS_ID }}
 
           echo "snapshot_id=${SNAPSHOT_ID}" >> $GITHUB_OUTPUT
-
-
 
       - name: Wait for snapshot to become available
         uses: ./.github/actions/wait-for-snapshot
@@ -65,7 +64,7 @@ jobs:
         run: |
           SOURCE_SNAPSHOT_ID=${{ steps.create_snapshot.outputs.snapshot_id }}
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          COPIED_SNAPSHOT_ID="copy-${SOURCE_SNAPSHOT_ID}-${TIMESTAMP}"
+          COPIED_SNAPSHOT_ID="re-encrypted-${SOURCE_SNAPSHOT_ID}-${TIMESTAMP}"
   
           echo "Copying and re-encrypting snapshot: ${SOURCE_SNAPSHOT_ID} to ${COPIED_SNAPSHOT_ID} with KMS key ${{ env.TRANSIT_KMS_KEY_ARN }}"
             
@@ -82,3 +81,18 @@ jobs:
         uses: ./.github/actions/wait-for-snapshot
         with:
           snapshot_id: ${{ steps.copy_snapshot.outputs.copied_snapshot_id }}
+
+
+
+  convert_shared_to_manual_rds_snapshot:
+    needs: create_rds_snapshots
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.SOURCE_OIDC_AWS_ROLE_TO_ASSUME }}
+          aws-region:  ${{ env.TARGET_AWS_REGION }}

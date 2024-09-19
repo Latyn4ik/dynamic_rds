@@ -5,6 +5,10 @@ inputs:
   snapshot_id:
     description: 'The ID of the RDS snapshot to check.'
     required: true
+  wait_seconds:
+    description: 'The number of seconds to wait for the snapshot to become available.'
+    required: false
+    default: "30"
 
 runs:
   using: "composite"
@@ -13,7 +17,7 @@ runs:
       shell: bash
       run: |
         SNAPSHOT_ID="${{ inputs.snapshot_id }}"
-        WAIT_SECONDS="60"
+        WAIT_SECONDS="${{ inputs.wait_seconds }}"
         STATUS=""
         while [ "$STATUS" != "available" ]; do
           echo "Checking status of snapshot: $SNAPSHOT_ID"

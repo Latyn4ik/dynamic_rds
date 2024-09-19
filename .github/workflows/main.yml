@@ -63,8 +63,7 @@ jobs:
         id: copy_snapshot
         run: |
           SOURCE_SNAPSHOT_ID=${{ steps.create_snapshot.outputs.snapshot_id }}
-          TIMESTAMP=$(date +%Y-%m-%d-%H-%M-%S)
-          COPIED_SNAPSHOT_ID="re-encrypted-${SOURCE_SNAPSHOT_ID}-${TIMESTAMP}"
+          COPIED_SNAPSHOT_ID="re-encrypted-${SOURCE_SNAPSHOT_ID}"
   
           echo "Copying and re-encrypting snapshot: ${SOURCE_SNAPSHOT_ID} to ${COPIED_SNAPSHOT_ID} with KMS key ${{ env.TRANSIT_KMS_KEY_ARN }}"
             

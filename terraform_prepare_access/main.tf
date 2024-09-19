@@ -77,14 +77,16 @@ data "aws_iam_policy_document" "github_actions_rds_snapshots_and_kms" {
       "kms:ReEncryptFrom",
       "kms:List*",
       "kms:Get*",
-      "kms:Describe*"
+      "kms:Describe*",
+      "kms:CreateGrant",
+      "kms:ListGrants",
+      "kms:RevokeGrant"
     ]
 
     resources = [
       "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/*"
     ]
   }
-
 }
 
 

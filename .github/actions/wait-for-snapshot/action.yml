@@ -13,6 +13,7 @@ runs:
       shell: bash
       run: |
         SNAPSHOT_ID="${{ inputs.snapshot_id }}"
+        WAIT_SECONDS="60"
         STATUS=""
         while [ "$STATUS" != "available" ]; do
           echo "Checking status of snapshot: $SNAPSHOT_ID"
@@ -22,8 +23,8 @@ runs:
             --output text)
           echo "Current status: $STATUS"
           if [ "$STATUS" != "available" ]; then
-            echo "Snapshot is not yet available, waiting 60 seconds..."
-            sleep 60
+            echo "Snapshot is not yet available, waiting ${WAIT_SECONDS} seconds..."
+            sleep $WAIT_SECONDS
           fi
         done
         echo "Snapshot ${SNAPSHOT_ID} is now available!"

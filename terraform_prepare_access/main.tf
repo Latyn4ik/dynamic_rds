@@ -72,7 +72,9 @@ data "aws_iam_policy_document" "github_actions_rds_snapshots_and_kms" {
     actions = [
       "kms:Decrypt",
       "kms:Encrypt",
-      "kms:GenerateDataKey",
+      "kms:GenerateDataKey*",
+      "kms:ReEncryptTo",
+      "kms:ReEncryptFrom",
       "kms:List*",
       "kms:Get*",
       "kms:Describe*"

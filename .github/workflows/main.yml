@@ -11,9 +11,15 @@ on:
 
 env:
   SOURCE_AWS_REGION: "eu-central-1"
-  OIDC_AWS_ROLE_TO_ASSUME: "arn:aws:iam::637594911457:role/github_oidc_role"
-  SOURCE_RDS_ID: "dev-portal-postgres-main-0"
+  SOURCE_OIDC_AWS_ROLE_TO_ASSUME: "arn:aws:iam::637594911457:role/github_oidc_role"
+  SOURCE_RDS_ID: "dev-portal-postgres-main-0" # Name of RDS instance from which the snapshot will be taken
+
+  TARGET_AWS_ACCOUNT_ID: "430151838095" # AWS account id with which the encrypted RDS snapshot will be shared and where the new RDS instance will be deployed
+  TARGET_AWS_REGION: "us-east-2" # The region in which to place the encrypted RDS snapshot and where the new RDS instance will be deployed
+  TARGET_RDS_ID: "test3R3R3" # The name for the new RDS instance that will be created based on the encrypted RDS snapshot
+
   NEW_RDS_SNAPSHOT_NAME_PREFIX: "transit-rds-snapshot"
+  TRANSIT_KMS_KEY_ARN: "arn:aws:kms:eu-central-1:637594911457:alias/transit_rds_key"
 
 
 
@@ -32,7 +38,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ env.OIDC_AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ env.SOURCE_OIDC_AWS_ROLE_TO_ASSUME }}
           aws-region:  ${{ env.SOURCE_AWS_REGION }}
 
       - name: Create RDS snapshot
@@ -66,3 +72,20 @@ jobs:
             fi
           done
           echo "Snapshot ${SNAPSHOT_ID} is now available!"
+
+
+      - name: Copy and re-encrypt RDS snapshot with custom KMS key
+        run: |
+          SOURCE_SNAPSHOT_ID=${{ steps.create_snapshot.outputs.snapshot_id }}
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          COPIED_SNAPSHOT_ID="copy-${SOURCE_SNAPSHOT_ID}-${TIMESTAMP}"
+  
+          echo "Copying and re-encrypting snapshot: ${SOURCE_SNAPSHOT_ID} to ${COPIED_SNAPSHOT_ID} with KMS key ${{ env.TRANSIT_KMS_KEY_ARN }}"
+            
+          aws rds copy-db-snapshot \
+            --source-db-snapshot-identifier ${SOURCE_SNAPSHOT_ID} \
+            --target-db-snapshot-identifier ${COPIED_SNAPSHOT_ID} \
+            --kms-key-id ${{ env.TRANSIT_KMS_KEY_ARN }} \
+            --output json
+  
+          echo "Snapshot copy with new KMS key completed. Snapshot ID: ${COPIED_SNAPSHOT_ID}"

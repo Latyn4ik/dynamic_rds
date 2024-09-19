@@ -62,7 +62,8 @@ data "aws_iam_policy_document" "github_actions_rds_snapshots_and_kms" {
       "rds:CopyDBSnapshot",
       "rds:AddTagsToResource",
       "rds:ListTagsForResource",
-      "rds:DeleteDBSnapshot"
+      "rds:DeleteDBSnapshot",
+      "rds:ModifyDBSnapshotAttribute"
     ]
 
     resources = ["*"]

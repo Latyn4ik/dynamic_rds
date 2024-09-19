@@ -1,0 +1,29 @@
+name: Wait for snapshot availability
+description: This action waits until a specified RDS snapshot becomes available.
+
+inputs:
+  snapshot_id:
+    description: 'The ID of the RDS snapshot to check.'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Wait for snapshot to become available
+      shell: bash
+      run: |
+        SNAPSHOT_ID="${{ inputs.snapshot_id }}"
+        STATUS=""
+        while [ "$STATUS" != "available" ]; do
+          echo "Checking status of snapshot: $SNAPSHOT_ID"
+          STATUS=$(aws rds describe-db-snapshots \
+            --db-snapshot-identifier ${SNAPSHOT_ID} \
+            --query 'DBSnapshots[0].Status' \
+            --output text)
+          echo "Current status: $STATUS"
+          if [ "$STATUS" != "available" ]; then
+            echo "Snapshot is not yet available, waiting 60 seconds..."
+            sleep 60
+          fi
+        done
+        echo "Snapshot ${SNAPSHOT_ID} is now available!"

@@ -29,7 +29,7 @@ permissions:
 
 jobs:
   create_rds_snapshots:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
 
     steps:
@@ -50,31 +50,18 @@ jobs:
             --db-snapshot-identifier ${SNAPSHOT_ID} \
             --db-instance-identifier ${{ env.SOURCE_RDS_ID }}
 
-          echo "::set-output name=snapshot_id::${SNAPSHOT_ID}"
+          echo "snapshot_id=${SNAPSHOT_ID}" >> $GITHUB_OUTPUT
 
 
 
       - name: Wait for snapshot to become available
-        id: wait_for_snapshot
-        run: |
-          SNAPSHOT_ID=${{ steps.create_snapshot.outputs.snapshot_id }}
-          STATUS=""
-          while [ "$STATUS" != "available" ]; do
-            echo "Checking status of snapshot: $SNAPSHOT_ID"
-            STATUS=$(aws rds describe-db-snapshots \
-              --db-snapshot-identifier ${SNAPSHOT_ID} \
-              --query 'DBSnapshots[0].Status' \
-              --output text)
-            echo "Current status: $STATUS"
-            if [ "$STATUS" != "available" ]; then
-              echo "Snapshot is not yet available, waiting 60 seconds..."
-              sleep 60
-            fi
-          done
-          echo "Snapshot ${SNAPSHOT_ID} is now available!"
+        uses: ./.github/actions/wait-for-snapshot
+        with:
+          snapshot_id: ${{ steps.create_snapshot.outputs.snapshot_id }}
 
 
       - name: Copy and re-encrypt RDS snapshot with custom KMS key
+        id: copy_snapshot
         run: |
           SOURCE_SNAPSHOT_ID=${{ steps.create_snapshot.outputs.snapshot_id }}
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
@@ -88,4 +75,10 @@ jobs:
             --kms-key-id ${{ env.TRANSIT_KMS_KEY_ARN }} \
             --output json
   
+          echo "copied_snapshot_id=${COPIED_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
           echo "Snapshot copy with new KMS key completed. Snapshot ID: ${COPIED_SNAPSHOT_ID}"
+
+      - name: Wait for re-encrypted snapshot to become available
+        uses: ./.github/actions/wait-for-snapshot
+        with:
+          snapshot_id: ${{ steps.copy_snapshot.outputs.copied_snapshot_id }}

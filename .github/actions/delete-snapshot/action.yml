@@ -1,0 +1,16 @@
+name: Delete Snapshot
+description: Deletes a specified RDS snapshot.
+
+inputs:
+  snapshot_id:
+    description: 'The ID of the snapshot to delete.'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Delete RDS snapshot
+      shell: bash
+      run: |
+        aws rds delete-db-snapshot \
+          --db-snapshot-identifier ${{ inputs.snapshot_id }}

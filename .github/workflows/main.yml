@@ -83,6 +83,12 @@ jobs:
           snapshot_id: ${{ steps.copy_snapshot.outputs.copied_snapshot_id }}
 
 
+      - name: Delete original snapshot
+        uses: ./.github/actions/delete-snapshot
+        with:
+          snapshot_id: ${{ steps.create_snapshot.outputs.snapshot_id }}
+
+
 
   convert_shared_to_manual_rds_snapshot:
     needs: create_rds_snapshots
@@ -91,8 +97,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ env.SOURCE_OIDC_AWS_ROLE_TO_ASSUME }}
-          aws-region:  ${{ env.TARGET_AWS_REGION }}
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: ${{ env.SOURCE_OIDC_AWS_ROLE_TO_ASSUME }}
+      #     aws-region:  ${{ env.TARGET_AWS_REGION }}

@@ -59,7 +59,10 @@ data "aws_iam_policy_document" "github_actions_rds_snapshots_and_kms" {
     actions = [
       "rds:CreateDBSnapshot",
       "rds:DescribeDBSnapshots",
-      "rds:CopyDBSnapshot"
+      "rds:CopyDBSnapshot",
+      "rds:AddTagsToResource",
+      "rds:ListTagsForResource",
+      "rds:DeleteDBSnapshot"
     ]
 
     resources = ["*"]
@@ -69,7 +72,10 @@ data "aws_iam_policy_document" "github_actions_rds_snapshots_and_kms" {
     actions = [
       "kms:Decrypt",
       "kms:Encrypt",
-      "kms:GenerateDataKey"
+      "kms:GenerateDataKey",
+      "kms:List*",
+      "kms:Get*",
+      "kms:Describe*"
     ]
 
     resources = [

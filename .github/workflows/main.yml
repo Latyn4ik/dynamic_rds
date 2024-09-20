@@ -74,10 +74,12 @@ jobs:
             --source-db-snapshot-identifier ${SOURCE_SNAPSHOT_ID} \
             --target-db-snapshot-identifier ${COPIED_SNAPSHOT_ID} \
             --kms-key-id ${{ env.TRANSIT_KMS_KEY_ARN }} \
+            --source-region ${{ env.SOURCE_AWS_REGION }} \
+            --region ${{ env.TARGET_AWS_REGION }} \
             --output json
   
           echo "copied_snapshot_id=${COPIED_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
-          echo "Snapshot copy with new KMS key completed. Snapshot ID: ${COPIED_SNAPSHOT_ID}"
+          echo "Snapshot copy with new KMS key to region: ${{ env.TARGET_AWS_REGION }} completed. Snapshot ID: ${COPIED_SNAPSHOT_ID}"
 
       - name: Wait for re-encrypted snapshot to become available
         uses: ./.github/actions/wait-for-snapshot
@@ -101,6 +103,7 @@ jobs:
           aws rds modify-db-snapshot-attribute \
             --db-snapshot-identifier ${COPIED_SNAPSHOT_ID} \
             --attribute-name restore \
+            --region ${{ env.TARGET_AWS_REGION }} \
             --values-to-add ${{ env.TARGET_AWS_ACCOUNT_ID }}
   
           echo "Snapshot ${COPIED_SNAPSHOT_ID} is now shared with account ${TARGET_AWS_ACCOUNT_ID}"
@@ -112,6 +115,9 @@ jobs:
     needs: create_and_share_rds_snapshot
     runs-on: ubuntu-24.04
 
+    outputs:
+      final_snapshot_id: ${{ steps.convert_shapshot.outputs.manual_snapshot_id }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -121,7 +127,8 @@ jobs:
           role-to-assume: ${{ env.TARGET_OIDC_AWS_ROLE_TO_ASSUME }}
           aws-region:  ${{ env.TARGET_AWS_REGION }}
 
-      - name: Convert shared RDS snapshot to manual
+      - name: Convert shared RDS snapshot to manual (Target account)
+        id: convert_shapshot
         run: |
           SHARED_SNAPSHOT_ID="${{ needs.create_and_share_rds_snapshot.outputs.shared_snapshot_id }}"
           MANUAL_SNAPSHOT_ID="manual-${SHARED_SNAPSHOT_ID}"
@@ -133,9 +140,21 @@ jobs:
             --kms-key-id ${{ env.TRANSIT_KMS_KEY_ARN }} \
             --region ${{ env.TARGET_AWS_REGION }}
 
-          echo "MANUAL_SNAPSHOT_ID=${MANUAL_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
+          echo "manual_snapshot_id=${MANUAL_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
 
-      # - name: Wait for new snapshot to become available
-      #   uses: ./.github/actions/wait-for-snapshot
-      #   with:
-      #     snapshot_id: ${{ mock }}
+      - name: Wait for converted snapshot to become available (Target account)
+        uses: ./.github/actions/wait-for-snapshot
+        with:
+          snapshot_id:${{ steps.convert_shapshot.outputs.manual_snapshot_id }}
+
+
+      - name: Configure AWS Credentials in Source Account
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.SOURCE_OIDC_AWS_ROLE_TO_ASSUME }}
+          aws-region:  ${{ env.SOURCE_AWS_REGION }}
+
+      - name: Delete original snapshot (Source Account)
+        uses: ./.github/actions/delete-snapshot
+        with:
+          snapshot_id: ${{ needs.create_and_share_rds_snapshot.outputs.shared_snapshot_id }}

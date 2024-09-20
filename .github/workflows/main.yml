@@ -11,12 +11,12 @@ on:
 
 env:
   SOURCE_AWS_REGION: "eu-central-1"
-  SOURCE_OIDC_AWS_ROLE_TO_ASSUME: "arn:aws:iam::637594911457:role/github_oidc_role"
+  SOURCE_OIDC_AWS_ROLE_TO_ASSUME: "arn:aws:iam::637594911457:role/github-oidc-provider-aws"
   SOURCE_RDS_ID: "dev-portal-postgres-main-0" # Name of RDS instance from which the snapshot will be taken
 
-  TARGET_AWS_ACCOUNT_ID: "430151838095" # AWS account id with which the encrypted RDS snapshot will be shared and where the new RDS instance will be deployed
-  TARGET_AWS_REGION: "us-east-2" # The region in which to place the encrypted RDS snapshot and where the new RDS instance will be deployed
-  TARGET_OIDC_AWS_ROLE_TO_ASSUME: "mock"
+  TARGET_AWS_ACCOUNT_ID: "962547359624" # AWS account id with which the encrypted RDS snapshot will be shared and where the new RDS instance will be deployed
+  TARGET_AWS_REGION: "eu-west-1" # The region in which to place the encrypted RDS snapshot and where the new RDS instance will be deployed
+  TARGET_OIDC_AWS_ROLE_TO_ASSUME: "arn:aws:iam::962547359624:role/github-oidc-provider-aws"
   TARGET_RDS_ID: "test3R3R3" # The name for the new RDS instance that will be created based on the encrypted RDS snapshot
 
   NEW_RDS_SNAPSHOT_NAME_PREFIX: "transit-rds-snapshot"
@@ -100,6 +100,7 @@ jobs:
             --values-to-add ${{ env.TARGET_AWS_ACCOUNT_ID }}
   
           echo "Snapshot ${COPIED_SNAPSHOT_ID} is now shared with account ${TARGET_AWS_ACCOUNT_ID}"
+          echo "shared_snapshot_id=${COPIED_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
 
 
 
@@ -110,8 +111,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # - name: Configure AWS Credentials
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     role-to-assume: ${{ env.SOURCE_OIDC_AWS_ROLE_TO_ASSUME }}
-      #     aws-region:  ${{ env.TARGET_AWS_REGION }}
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.SOURCE_OIDC_AWS_ROLE_TO_ASSUME }}
+          aws-region:  ${{ env.TARGET_AWS_REGION }}
+
+      # - name: Convert shared RDS snapshot to manual
+      #   run: |
+      #     SHARED_SNAPSHOT_ID="${{ steps.create_and_share_rds_snapshot.outputs.shared_snapshot_id }}"
+      #     MANUAL_SNAPSHOT_ID="manual-${SHARED_SNAPSHOT_ID}"
+      #     echo "Converting shared RDS snapshot ${SHARED_SNAPSHOT_ID} to manual snapshot ${MANUAL_SNAPSHOT_ID}"
+
+      #     aws rds copy-db-snapshot \
+      #       --source-db-snapshot-identifier ${SHARED_SNAPSHOT_ID} \
+      #       --target-db-snapshot-identifier ${MANUAL_SNAPSHOT_ID} \
+      #       --kms-key-id ${{ env.TRANSIT_KMS_KEY_ARN }} \
+      #       --region ${{ env.TARGET_AWS_REGION }}
+
+      #     echo "MANUAL_SNAPSHOT_ID=${MANUAL_SNAPSHOT_ID}" >> $GITHUB_OUTPUT

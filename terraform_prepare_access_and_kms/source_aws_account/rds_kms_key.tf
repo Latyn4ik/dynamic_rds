@@ -10,8 +10,8 @@ data "aws_iam_policy_document" "transit_kms_key_policy" {
   }
 
   statement {
-    sid       = "Allow use of the key for target AWS account"
-    actions   = [
+    sid = "Allow use of the key for target AWS account"
+    actions = [
       "kms:Encrypt",
       "kms:Decrypt",
       "kms:ReEncrypt*",
@@ -26,8 +26,8 @@ data "aws_iam_policy_document" "transit_kms_key_policy" {
   }
 
   statement {
-    sid       = "Allow target account to administer the key"
-    actions   = [
+    sid = "Allow target account to administer the key"
+    actions = [
       "kms:CreateGrant",
       "kms:ListGrants",
       "kms:RevokeGrant"
@@ -42,9 +42,9 @@ data "aws_iam_policy_document" "transit_kms_key_policy" {
 
 
 resource "aws_kms_key" "transit" {
-  description             = "Transit KMS key for encrypting RDS snapshots"
+  description = "Transit KMS key for encrypting RDS snapshots"
 
-  key_usage = "ENCRYPT_DECRYPT"
+  key_usage               = "ENCRYPT_DECRYPT"
   deletion_window_in_days = 7
 
   policy = data.aws_iam_policy_document.transit_kms_key_policy.json

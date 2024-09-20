@@ -5,7 +5,7 @@ data "aws_region" "current" {}
 module "github-oidc" {
   source = "../modules/terraform-aws-github-oidc-provider"
 
-  repositories              = ["Latyn4ik/dynamic_rds::ref:refs/heads/main"]
+  repositories              = ["repo:Latyn4ik/dynamic_rds:*"]
   oidc_role_attach_policies = [aws_iam_policy.github_actions_rds_snapshots_and_kms.arn]
 }
 

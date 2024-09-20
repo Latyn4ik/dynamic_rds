@@ -32,6 +32,9 @@ jobs:
   create_and_share_rds_snapshot:
     runs-on: ubuntu-24.04
 
+    outputs:
+      shared_snapshot_id: ${{ steps.share_snapshot.outputs.shared_snapshot_id }}
+    
     steps:
       - uses: actions/checkout@v4
 
@@ -89,6 +92,7 @@ jobs:
 
 
       - name: Share re-encrypted snapshot with target AWS account
+        id: share_snapshot
         run: |
           COPIED_SNAPSHOT_ID=${{ steps.copy_snapshot.outputs.copied_snapshot_id }}
     

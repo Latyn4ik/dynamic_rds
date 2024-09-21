@@ -17,4 +17,4 @@ runs:
       run: |
         aws rds delete-db-snapshot \
           --db-snapshot-identifier ${{ inputs.snapshot_id }} \
-          --region ${SNAPSHOT_REGION}
+          --region ${{ inputs.snapshot_region }}

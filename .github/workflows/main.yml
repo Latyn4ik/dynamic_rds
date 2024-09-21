@@ -40,7 +40,7 @@ jobs:
 
       - name: Set Short SHA
         id: generate_short_sha
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Echo short SHA
         run: |

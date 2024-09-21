@@ -65,8 +65,7 @@ jobs:
   #     - name: Create RDS snapshot
   #       id: create_snapshot
   #       run: |
-  #         TIMESTAMP=$(date +%Y-%m-%d-%H-%M-%S)
-  #         SNAPSHOT_ID="${{ env.NEW_RDS_SNAPSHOT_NAME_PREFIX }}-${TIMESTAMP}"
+  #         SNAPSHOT_ID="${{ env.NEW_RDS_SNAPSHOT_NAME_PREFIX }}-${{ env.SHORT_SHA }}"
   #         aws rds create-db-snapshot \
   #           --db-snapshot-identifier ${SNAPSHOT_ID} \
   #           --db-instance-identifier ${{ env.SOURCE_RDS_ID }}

@@ -90,15 +90,15 @@ jobs:
         id: copy_snapshot
         run: |
           SOURCE_SNAPSHOT_ID=${{ steps.create_snapshot.outputs.snapshot_id }}
+          SNAPSHOT_ARN=$(aws rds describe-db-snapshots --snapshot-type manual --db-snapshot-identifier "$SOURCE_SNAPSHOT_ID" --query 'DBSnapshots[0].DBSnapshotArn' --output text)
           COPIED_SNAPSHOT_ID="re-encrypted-${SOURCE_SNAPSHOT_ID}"
   
           echo "Copying and re-encrypting snapshot: ${SOURCE_SNAPSHOT_ID} to ${COPIED_SNAPSHOT_ID} with KMS key ${{ env.SOURCE_KMS_KEY_ARN }}"
-            
+          
           aws rds copy-db-snapshot \
-            --source-db-snapshot-identifier ${SOURCE_SNAPSHOT_ID} \
+            --source-db-snapshot-identifier ${SNAPSHOT_ARN} \
             --target-db-snapshot-identifier ${COPIED_SNAPSHOT_ID} \
             --kms-key-id ${{ env.SOURCE_KMS_KEY_ARN }} \
-            --source-region ${{ env.SOURCE_AWS_REGION }} \
             --region ${{ env.TARGET_AWS_REGION }} \
             --output json
   

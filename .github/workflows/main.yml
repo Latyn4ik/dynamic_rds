@@ -42,9 +42,7 @@ jobs:
         id: generate_short_sha
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Echo short SHA
-        run: |
-          echo "Short commit SHA: ${{ steps.generate_short_sha.outputs.short_sha }}"
+
 
   # create_and_share_rds_snapshot:
   #   needs: [prepare_job]
@@ -136,7 +134,7 @@ jobs:
     env:
       SHORT_SHA: ${{ needs.prepare_job.outputs.short_sha }}
       #SHARED_SNAPSHOT_ID: ${{ needs.create_and_share_rds_snapshot.outputs.shared_snapshot_id }}
-      SHARED_SNAPSHOT_ID: "re-encrypted-transit-rds-snapshot-2024-09-21-11-10-38"
+      SHARED_SNAPSHOT_ID: "arn:aws:rds:eu-central-1:637594911457:snapshot:re-encrypted-transit-rds-snapshot-2024-09-21-11-10-38"
 
 
     outputs:

@@ -5,6 +5,9 @@ inputs:
   snapshot_id:
     description: 'The ID of the RDS snapshot to check.'
     required: true
+  snapshot_region:
+    description: 'Region where placed RDS snapshot.'
+    required: true
   wait_seconds:
     description: 'The number of seconds to wait for the snapshot to become available.'
     required: false
@@ -17,6 +20,7 @@ runs:
       shell: bash
       run: |
         SNAPSHOT_ID="${{ inputs.snapshot_id }}"
+        SNAPSHOT_REGION="${{ inputs.snapshot_region }}""
         WAIT_SECONDS="${{ inputs.wait_seconds }}"
         STATUS=""
         while [ "$STATUS" != "available" ]; do
@@ -24,6 +28,7 @@ runs:
           STATUS=$(aws rds describe-db-snapshots \
             --db-snapshot-identifier ${SNAPSHOT_ID} \
             --query 'DBSnapshots[0].Status' \
+            --region ${SNAPSHOT_REGION} \
             --output text)
           echo "Current status: $STATUS"
           if [ "$STATUS" != "available" ]; then

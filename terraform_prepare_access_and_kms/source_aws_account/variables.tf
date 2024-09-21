@@ -1,6 +1,7 @@
-variable "region" {
+variable "target_aws_region" {
+  description = "AWS Region where will be located final RDS snapshot. And KMS key will be deployed in this region."
   type    = string
-  default = "eu-central-1"
+  default = "eu-west-1"
 }
 
 variable "target_aws_account_id" {

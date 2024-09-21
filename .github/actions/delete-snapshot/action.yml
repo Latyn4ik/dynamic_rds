@@ -5,6 +5,9 @@ inputs:
   snapshot_id:
     description: 'The ID of the snapshot to delete.'
     required: true
+  snapshot_region:
+    description: 'Region where placed RDS snapshot.'
+    required: true
 
 runs:
   using: "composite"
@@ -13,4 +16,5 @@ runs:
       shell: bash
       run: |
         aws rds delete-db-snapshot \
-          --db-snapshot-identifier ${{ inputs.snapshot_id }}
+          --db-snapshot-identifier ${{ inputs.snapshot_id }} \
+          --region ${SNAPSHOT_REGION}

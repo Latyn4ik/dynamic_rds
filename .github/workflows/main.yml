@@ -135,8 +135,7 @@ jobs:
             --source-db-snapshot-identifier ${SHARED_SNAPSHOT_ID} \
             --target-db-snapshot-identifier ${MANUAL_SNAPSHOT_ID} \
             --kms-key-id ${{ env.TRANSIT_KMS_KEY_ARN }} \
-            --source-region ${{ env.SOURCE_AWS_REGION }} \
-            --region ${{ env.TARGET_AWS_REGION }}
+            --source-region ${{ env.SOURCE_AWS_REGION }}
 
           echo "manual_snapshot_id=${MANUAL_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
 

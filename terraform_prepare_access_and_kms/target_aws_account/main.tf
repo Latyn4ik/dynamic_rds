@@ -28,7 +28,8 @@ data "aws_iam_policy_document" "github_actions_rds_snapshots_and_kms" {
       "rds:ModifyDBSnapshotAttribute"
     ]
 
-    resources = ["arn:aws:rds:*:${data.aws_caller_identity.current.account_id}:*"]
+    # resources = ["arn:aws:rds:*:${data.aws_caller_identity.current.account_id}:*"]
+    resources = ["*"]
   }
 
   statement {

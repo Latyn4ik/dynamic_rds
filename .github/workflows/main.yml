@@ -193,3 +193,30 @@ jobs:
         with:
           snapshot_id: ${{ needs.create_and_share_rds_snapshot.outputs.shared_snapshot_arn }}
           snapshot_region: ${{ env.TARGET_AWS_REGION }}
+
+
+
+  # create_rds_instance:
+  #   needs: [prepare_job, convert_shared_to_manual_rds_snapshot]
+  #   runs-on: ubuntu-24.04
+        
+  #   env:
+  #     SHORT_SHA: ${{ needs.prepare_job.outputs.short_sha }}
+        
+  #   # outputs:
+  #     # final_snapshot_id: ${{ steps.convert_shapshot.outputs.manual_snapshot_id }}
+        
+  #   steps:
+  #     - uses: actions/checkout@v4
+        
+  #     - name: Configure AWS Credentials in Target Account
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: ${{ env.TARGET_OIDC_AWS_ROLE_TO_ASSUME }}
+  #         aws-region:  ${{ env.TARGET_AWS_REGION }}
+        
+      # - name: Create RDS instance
+      #   id: create_rds_instance
+      #   run: |
+      #     mock
+        

@@ -192,7 +192,7 @@ jobs:
       - name: Delete original snapshot (Source Account)
         uses: ./.github/actions/delete-snapshot
         with:
-          snapshot_id: ${{ needs.create_and_share_rds_snapshot.outputs.shared_snapshot_arn }}
+          snapshot_id: ${{ env.SHARED_SNAPSHOT_ARN }}
           snapshot_region: ${{ env.TARGET_AWS_REGION }}
 
 

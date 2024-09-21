@@ -163,36 +163,36 @@ jobs:
           role-to-assume: ${{ env.TARGET_OIDC_AWS_ROLE_TO_ASSUME }}
           aws-region:  ${{ env.TARGET_AWS_REGION }}
 
-      - name: Convert shared RDS snapshot to manual (Target account)
-        id: convert_shapshot
-        run: |
-          MANUAL_SNAPSHOT_ID="manual-dynamic-rds-${{ env.SHORT_SHA }}"
-          echo "Converting shared RDS snapshot ${{ env.SHARED_SNAPSHOT_ARN }} to manual snapshot ${MANUAL_SNAPSHOT_ID}"
+      # - name: Convert shared RDS snapshot to manual (Target account)
+      #   id: convert_shapshot
+      #   run: |
+      #     MANUAL_SNAPSHOT_ID="manual-dynamic-rds-${{ env.SHORT_SHA }}"
+      #     echo "Converting shared RDS snapshot ${{ env.SHARED_SNAPSHOT_ARN }} to manual snapshot ${MANUAL_SNAPSHOT_ID}"
 
-          aws rds copy-db-snapshot \
-            --source-db-snapshot-identifier ${{ env.SHARED_SNAPSHOT_ARN }} \
-            --target-db-snapshot-identifier ${MANUAL_SNAPSHOT_ID} \
-            --kms-key-id ${{ env.TARGET_KMS_KEY_ARN }}
+      #     aws rds copy-db-snapshot \
+      #       --source-db-snapshot-identifier ${{ env.SHARED_SNAPSHOT_ARN }} \
+      #       --target-db-snapshot-identifier ${MANUAL_SNAPSHOT_ID} \
+      #       --kms-key-id ${{ env.TARGET_KMS_KEY_ARN }}
 
-          echo "manual_snapshot_id=${MANUAL_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
+      #     echo "manual_snapshot_id=${MANUAL_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
 
-      - name: Wait for converted snapshot to become available (Target account)
-        uses: ./.github/actions/wait-for-snapshot
-        with:
-          snapshot_id: ${{ steps.convert_shapshot.outputs.manual_snapshot_id }}
-          snapshot_region: ${{ env.TARGET_AWS_REGION }}
+      # - name: Wait for converted snapshot to become available (Target account)
+      #   uses: ./.github/actions/wait-for-snapshot
+      #   with:
+      #     snapshot_id: ${{ steps.convert_shapshot.outputs.manual_snapshot_id }}
+      #     snapshot_region: ${{ env.TARGET_AWS_REGION }}
 
 
-      - name: Configure AWS Credentials in Source Account
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ env.SOURCE_OIDC_AWS_ROLE_TO_ASSUME }}
-          aws-region:  ${{ env.TARGET_AWS_REGION }}
+      # - name: Configure AWS Credentials in Source Account
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: ${{ env.SOURCE_OIDC_AWS_ROLE_TO_ASSUME }}
+      #     aws-region:  ${{ env.TARGET_AWS_REGION }}
 
       - name: Delete original snapshot (Source Account)
         uses: ./.github/actions/delete-snapshot
         with:
-          snapshot_id: ${{ env.SHARED_SNAPSHOT_ARN }}
+          snapshot_id: "re-encrypted-transit-rds-snapshot-e3ae984" #${{ env.SHARED_SNAPSHOT_ARN }}
           snapshot_region: ${{ env.TARGET_AWS_REGION }}
 
 

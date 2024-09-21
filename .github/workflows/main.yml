@@ -56,7 +56,7 @@ jobs:
       SHORT_SHA: ${{ needs.prepare_job.outputs.short_sha }}
 
     outputs:
-      shared_snapshot_id: ${{ steps.share_snapshot.outputs.shared_snapshot_id }}
+      shared_snapshot_arn: ${{ steps.share_snapshot.outputs.shared_snapshot_arn }}
     
     steps:
       - uses: actions/checkout@v4
@@ -133,7 +133,10 @@ jobs:
             --region ${{ env.TARGET_AWS_REGION }}
   
           echo "Snapshot ${COPIED_SNAPSHOT_ID} is now shared with account ${TARGET_AWS_ACCOUNT_ID}"
-          echo "shared_snapshot_id=${COPIED_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
+          
+          SHARED_SNAPSHOT_ARN=$(aws rds describe-db-snapshots --snapshot-type manual --db-snapshot-identifier "$COPIED_SNAPSHOT_ID" --query 'DBSnapshots[0].DBSnapshotArn' --output text)
+          echo "shared_snapshot_arn=${SHARED_SNAPSHOT_ARN}" >> $GITHUB_OUTPUT
+          
 
 
 
@@ -144,7 +147,7 @@ jobs:
 
     env:
       SHORT_SHA: ${{ needs.prepare_job.outputs.short_sha }}
-      SHARED_SNAPSHOT_ID: ${{ needs.create_and_share_rds_snapshot.outputs.shared_snapshot_id }}
+      SHARED_SNAPSHOT_ARN: ${{ needs.create_and_share_rds_snapshot.outputs.shared_snapshot_arn }}
       # SHARED_SNAPSHOT_ID: "arn:aws:rds:eu-central-1:637594911457:snapshot:re-encrypted-transit-rds-snapshot-2024-09-21-11-10-38"
 
 
@@ -164,10 +167,10 @@ jobs:
         id: convert_shapshot
         run: |
           MANUAL_SNAPSHOT_ID="manual-dynamic-rds-${{ env.SHORT_SHA }}"
-          echo "Converting shared RDS snapshot ${{ env.SHARED_SNAPSHOT_ID }} to manual snapshot ${MANUAL_SNAPSHOT_ID}"
+          echo "Converting shared RDS snapshot ${{ env.SHARED_SNAPSHOT_ARN }} to manual snapshot ${MANUAL_SNAPSHOT_ID}"
 
           aws rds copy-db-snapshot \
-            --source-db-snapshot-identifier ${{ env.SHARED_SNAPSHOT_ID }} \
+            --source-db-snapshot-identifier ${{ env.SHARED_SNAPSHOT_ARN }} \
             --target-db-snapshot-identifier ${MANUAL_SNAPSHOT_ID} \
             --kms-key-id ${{ env.TARGET_KMS_KEY_ARN }}
 
@@ -179,13 +182,14 @@ jobs:
           snapshot_id:${{ steps.convert_shapshot.outputs.manual_snapshot_id }}
 
 
-      # - name: Configure AWS Credentials in Source Account
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     role-to-assume: ${{ env.SOURCE_OIDC_AWS_ROLE_TO_ASSUME }}
-      #     aws-region:  ${{ env.SOURCE_AWS_REGION }}
+      - name: Configure AWS Credentials in Source Account
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.SOURCE_OIDC_AWS_ROLE_TO_ASSUME }}
+          aws-region:  ${{ env.TARGET_AWS_REGION }}
 
-      # - name: Delete original snapshot (Source Account)
-      #   uses: ./.github/actions/delete-snapshot
-      #   with:
-      #     snapshot_id: ${{ needs.create_and_share_rds_snapshot.outputs.shared_snapshot_id }}
+      - name: Delete original snapshot (Source Account)
+        uses: ./.github/actions/delete-snapshot
+        with:
+          snapshot_id: ${{ needs.create_and_share_rds_snapshot.outputs.shared_snapshot_arn }}
+          snapshot_region: ${{ env.TARGET_AWS_REGION }}

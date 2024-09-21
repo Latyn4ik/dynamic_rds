@@ -42,6 +42,10 @@ jobs:
         id: generate_short_sha
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
+      - name: Echo short SHA
+        run: |
+          echo "Short commit SHA: ${{ steps.generate_short_sha.outputs.short_sha }}"
+
   # create_and_share_rds_snapshot:
   #   needs: [prepare_job]
   #   runs-on: ubuntu-24.04

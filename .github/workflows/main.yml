@@ -210,6 +210,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: test
+        id: generate_backend_tf
+        run: |
+          echo "${{ github.workspace }}"
+          ls "${{ github.workspace }}"
+
       - name: Generate backend.tf
         id: generate_backend_tf
         run: |

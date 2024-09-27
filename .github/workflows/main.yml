@@ -17,6 +17,7 @@ env:
 
   NEW_RDS_SNAPSHOT_NAME_PREFIX: "transit-rds-snapshot"
   NEW_RDS_FOLDER_PATH: "terrafrom-infra"
+  DYNAMIC_RDS_INSTANCE_TEMPLATE_PATH: "dynamic_rds_instance_template"
 
   TARGET_AWS_ACCOUNT_ID: "962547359624" # AWS account id with which the encrypted RDS snapshot will be shared and where the new RDS instance will be deployed
   TARGET_AWS_REGION: "eu-west-1" # The region in which to place the encrypted RDS snapshot and where the new RDS instance will be deployed
@@ -236,25 +237,33 @@ jobs:
           EOF
           echo "backend_tf_file_path=${BACKEND_TF_FILE_PATH}" >> $GITHUB_OUTPUT
 
-      - name: Use Commit File Action
-        uses: ./.github/actions/commit-file
-        with:
-          commit_path: ${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}
-          commit_file: ${{ steps.generate_backend_tf.outputs.backend_tf_file_path }}
           
-  #     - name: Generate provider.tf
-  #       run: |
-  #         cat <<EOF > terrafrom-infra/${{ env.SHORT_SHA }}/provider.tf
-  #         provider "aws" {
-  #           region = "${{ env.TARGET_AWS_REGION }}"
-  #           default_tags {
-  #             tags = {
-  #               Terraform = true
-  #               Solution = "Github-Dynamic-RDS"
-  #             }
-  #           }
-  #         }
-  #         EOF
+      - name: Generate provider.tf
+        id: generate_provider_tf
+        run: |
+          PROVIDER_TF_FILE_PATH="${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}/provider.tf"
+          cat <<EOF > ${PROVIDER_TF_FILE_PATH}
+          provider "aws" {
+            region = "${{ env.TARGET_AWS_REGION }}"
+            default_tags {
+              tags = {
+                Terraform = true
+                Solution = "Github-Dynamic-RDS"
+              }
+            }
+          }
+          EOF
+          echo "provider_tf_file_path=${PROVIDER_TF_FILE_PATH}" >> $GITHUB_OUTPUT
+
+
+      - name: Copy terraform files from template to new dynamic RDS folder
+        run: |
+          cp -r ${{ env.DYNAMIC_RDS_INSTANCE_TEMPLATE_PATH }}/* ${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}/
+
+      - name: Commit all new files for dynamic RDS
+        uses: ./.github/actions/commit-files
+        with:
+          commit_folder: ${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}
 
   #     - name: Set up Terraform
   #       uses: hashicorp/setup-terraform@v3

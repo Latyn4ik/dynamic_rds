@@ -1,0 +1,36 @@
+name: "Commit Files Action"
+description: "Commits all files from the specified folder to the repository"
+
+inputs:
+  commit_folder:
+    description: "The folder containing files to commit"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Configure Git
+      shell: bash
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Set up authentication
+      shell: bash
+      run: |
+        git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
+
+    - name: Commit and Push Changes
+      shell: bash
+      run: |
+        cd "${{ inputs.commit_folder }}"
+        git add .
+        if git diff-index --quiet HEAD; then
+          echo "No changes to commit"
+        else
+          git commit -m "Committing all files from folder: ${{ inputs.commit_folder }}"
+          git push origin
+        fi

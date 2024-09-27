@@ -327,8 +327,8 @@ jobs:
 
       # - name: Terraform Destroy and Cleanup
       # run: |
-      #   cd "${{ inputs.commit_folder }}"
+      #   cd "${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}"
       #   terraform destroy -auto-approve
       #   cd ..
-      #   rm -rf "${{ inputs.commit_folder }}"
+      #   rm -rf "${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}"
       #   # add deleting of RDS snapshot 

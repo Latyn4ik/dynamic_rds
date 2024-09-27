@@ -259,7 +259,6 @@ jobs:
       - name: Copy terraform files from template to new dynamic RDS folder
         run: |
           cp -r ${{ env.DYNAMIC_RDS_INSTANCE_TEMPLATE_PATH }}/* ${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}
-          ls ${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}
 
       - name: Commit all new files for dynamic RDS
         uses: ./.github/actions/commit-files

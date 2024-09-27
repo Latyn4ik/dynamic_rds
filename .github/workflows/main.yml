@@ -217,6 +217,7 @@ jobs:
 
 
   create_rds_instance:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     # needs: [prepare_job, convert_shared_to_manual_rds_snapshot]
     needs: [prepare_job]
     runs-on: ubuntu-24.04
@@ -314,7 +315,21 @@ jobs:
       #     aws-region: ${{ env.TARGET_AWS_REGION }}
         
 
+      # - name: Terraform Init
+      #   run: |
+      #     cd "${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}"
+      #     terraform init
 
-### to do:
-  # job with dropdowl list to chose rds instance parameters and abillity to modify/redeploy instance with new parameters values
-  # job that destroy all crated resources (rds instance, parameters/options groups, snapshot)
+      # - name: Terraform Apply
+      #   run: |
+      #     cd "${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}"
+      #     terraform apply -auto-approve
+
+
+      # - name: Terraform Destroy and Cleanup
+      # run: |
+      #   cd "${{ inputs.commit_folder }}"
+      #   terraform destroy -auto-approve
+      #   cd ..
+      #   rm -rf "${{ inputs.commit_folder }}"
+      #   # add deleting of RDS snapshot 

@@ -43,8 +43,8 @@ runs:
     - name: Commit and Push Changes
       shell: bash
       run: |
-        git config user.name "github-actions-bot"
-        # git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config user.name "GitHub Actions Bot"
+        git config user.email "<>"
         git add "${{ inputs.commit_path }}"
-        git commit -am "Updated or added file: ${{ inputs.commit_path }}"
+        git commit -m "Updated or added file: ${{ inputs.commit_path }}"
         git push origin

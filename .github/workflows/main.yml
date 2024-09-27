@@ -282,10 +282,14 @@ jobs:
           echo "kms_key_id = \"${{ env.TARGET_KMS_KEY_ARN }}\"" >> ${TFVARS_FILE_PATH}
           echo "vpc_id = \"${{ env.TARGET_ACCOUNT_VPC_ID }}\"" >> ${TFVARS_FILE_PATH}
 
+          # Escaping quotes for subnets values
           escaped_subnets=$(echo '${{ env.TARGET_ACCOUNT_SUBNETS }}' | sed 's/"\([^"]*\)"/"\1"/g')
           echo "subnets = ${escaped_subnets}" >> ${TFVARS_FILE_PATH}
-          
-          echo "vpc_security_group_ids = ${{ env.TARGET_ACCOUNT_SECURITY_GROUPS }}" >> ${TFVARS_FILE_PATH}
+
+          # Escaping quotes for security groups values
+          escaped_security_groups=$(echo '${{ env.TARGET_ACCOUNT_SECURITY_GROUPS }}' | sed 's/"\([^"]*\)"/"\1"/g')
+          echo "vpc_security_group_ids = ${escaped_security_groups}" >> ${TFVARS_FILE_PATH}
+
           echo "snapshot_identifier = \"\"" >> ${TFVARS_FILE_PATH}
           
       - name: Copy terraform files from template to new dynamic RDS folder

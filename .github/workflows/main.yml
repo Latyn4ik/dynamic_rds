@@ -281,7 +281,7 @@ jobs:
           echo "vpc_id = \"${{ env.TARGET_ACCOUNT_VPC_ID }}\"" >> ${TFVARS_FILE_PATH}
           echo "subnets = ${{ env.TARGET_ACCOUNT_SUBNETS }}" >> ${TFVARS_FILE_PATH}
           echo "vpc_security_group_ids = ${{ env.TARGET_ACCOUNT_SECURITY_GROUPS }}" >> ${TFVARS_FILE_PATH}
-          echo "snapshot_identifier = \"\""" >> ${TFVARS_FILE_PATH}
+          echo "snapshot_identifier = \"\"" >> ${TFVARS_FILE_PATH}
           
       - name: Copy terraform files from template to new dynamic RDS folder
         run: |

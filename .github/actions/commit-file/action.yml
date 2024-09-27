@@ -39,9 +39,13 @@ runs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+              - name: Set up authentication
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+    
     - name: Commit and Push Changes
       shell: bash
       run: |
         git add "${{ inputs.commit_path }}"
         git commit -m "Updated or added file: ${{ inputs.commit_path }}"
-        git push
+        git push origin

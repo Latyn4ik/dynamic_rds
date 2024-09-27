@@ -217,7 +217,7 @@ jobs:
 
       - name: Create nw dir for dynamic RDS
         run: |
-          mkdir -p ${{ env.SHORT_SHA }}
+          mkdir -p ${{ github.workspace }}/terrafrom-infra/${{ env.SHORT_SHA }}
 
       - name: Generate backend.tf
         id: generate_backend_tf

@@ -8,6 +8,20 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      test_var:
+        description: ""
+        required: true
+        default: "mock"
+      instance_class:
+        description: "Instance Class for RDS Aurora cluster"
+        required: true
+        type: choice
+        options:
+          - db.r6g.large
+          - db.r6g.xlarge
+          - db.r6g.2xlarge
+        default: db.r6g.large
 
 env:
   SOURCE_AWS_REGION: "eu-central-1" # Region where placed RDS instance from which need create RDS snapshot
@@ -22,11 +36,11 @@ env:
   TARGET_AWS_ACCOUNT_ID: "962547359624" # AWS account id with which the encrypted RDS snapshot will be shared and where the new RDS instance will be deployed
   TARGET_AWS_REGION: "eu-west-1" # The region in which to place the encrypted RDS snapshot and where the new RDS instance will be deployed
   TARGET_OIDC_AWS_ROLE_TO_ASSUME: "arn:aws:iam::962547359624:role/github-oidc-provider-aws"
-  TARGET_RDS_ID: "test3R3R3" # The name for the new RDS instance that will be created based on the encrypted RDS snapshot
+  TARGET_RDS_CLUSTER_NAME_PREFIX_ID: "target-dynamic-aurora" # The name for the new RDS instance that will be created based on the encrypted RDS snapshot
   TARGET_KMS_KEY_ARN: "arn:aws:kms:eu-west-1:962547359624:key/5b477dae-31e6-47ef-b02c-19ff80893776"
-
-  
-
+  TARGET_ACCOUNT_VPC_ID: "vpc-02ee475c7a8ef19fd" # VPC ID in the target account whe must be deployed new RDS Aurora cluster
+  TARGET_ACCOUNT_SUBNETS: '["subnet-0b0acd17103b2938c", "subnet-037af5306c394acb4", "subnet-0f41bf8df8165e9a7"]'
+  TARGET_ACCOUNT_SECURITY_GROUPS: '[""]'
 
 
 
@@ -256,6 +270,19 @@ jobs:
           echo "provider_tf_file_path=${PROVIDER_TF_FILE_PATH}" >> $GITHUB_OUTPUT
 
 
+      - name: Generate terraform.tfvars
+        shell: bash
+        run: |
+          TFVARS_FILE_PATH="${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}/terraform.tfvars"
+          
+          echo "instance_class = \"${{ inputs.instance_class }}\"" > ${TFVARS_FILE_PATH}
+          echo "name = \"${{ env.TARGET_RDS_CLUSTER_NAME_PREFIX_ID }}\"" >> ${TFVARS_FILE_PATH}
+          echo "kms_key_id = \"${{ env.TARGET_KMS_KEY_ARN }}\"" >> ${TFVARS_FILE_PATH}
+          echo "vpc_id = \"${{ env.TARGET_ACCOUNT_VPC_ID }}\"" >> ${TFVARS_FILE_PATH}
+          echo "subnets = ${{ env.TARGET_ACCOUNT_SUBNETS }}" >> ${TFVARS_FILE_PATH}
+          echo "vpc_security_group_ids = ${{ env.TARGET_ACCOUNT_SECURITY_GROUPS }}" >> ${TFVARS_FILE_PATH}
+          echo "snapshot_identifier = \"\""" >> ${TFVARS_FILE_PATH}
+          
       - name: Copy terraform files from template to new dynamic RDS folder
         run: |
           cp -r ${{ env.DYNAMIC_RDS_INSTANCE_TEMPLATE_PATH }}/* ${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}
@@ -265,17 +292,17 @@ jobs:
         with:
           commit_folder: ${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}
 
-  #     - name: Set up Terraform
-  #       uses: hashicorp/setup-terraform@v3
-  #       with:
-  #         terraform_version: 1.9.6
+      # - name: Set up Terraform
+      #   uses: hashicorp/setup-terraform@v3
+      #   with:
+      #     terraform_version: 1.9.6
 
 
-  #     - name: Configure AWS Credentials in Target Account
-  #       uses: aws-actions/configure-aws-credentials@v4
-  #       with:
-  #         role-to-assume: ${{ env.TARGET_OIDC_AWS_ROLE_TO_ASSUME }}
-  #         aws-region: ${{ env.TARGET_AWS_REGION }}
+      # - name: Configure AWS Credentials in Target Account
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: ${{ env.TARGET_OIDC_AWS_ROLE_TO_ASSUME }}
+      #     aws-region: ${{ env.TARGET_AWS_REGION }}
         
 
 

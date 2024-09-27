@@ -1,0 +1,1 @@
+The folder where the terraform files will be stored for each launch of the deployment of a new RDS cluster

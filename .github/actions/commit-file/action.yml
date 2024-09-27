@@ -33,20 +33,18 @@ runs:
     #       mv "${{ inputs.commit_file }}" "${{ inputs.commit_path }}"
     #     fi
 
-    - name: Configure Git
+    # - name: Configure Git
+    #   shell: bash
+    #   run: |
+    #     git config --global user.name "github-actions[bot]"
+    #     git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+
+    - name: Commit and Push Changes
       shell: bash
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-    - name: Set up authentication
-      shell: bash
-      run: |
-        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-    
-    - name: Commit and Push Changes
-      shell: bash
-      run: |
         git add "${{ inputs.commit_path }}"
         git commit -m "Updated or added file: ${{ inputs.commit_path }}"
         git push origin

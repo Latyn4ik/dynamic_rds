@@ -1,0 +1,56 @@
+name: "Commit File Action"
+description: "Commits a file to the specified path in the repository"
+
+inputs:
+  commit_path:
+    description: "The path in the repository to commit the file"
+    required: true
+  commit_file:
+    description: "The file to commit"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Check if file exists
+      id: check_file
+      shell: bash
+      run: |
+        if [[ -f "${{ github.workspace }}/${{ inputs.commit_path }}" ]]; then
+          echo "File exists"
+        else
+          echo "File does not exist"
+        fi
+
+    - name: Compare file contents
+      id: compare_file
+      shell: bash
+      run: |
+        if [[ -f "${{ github.workspace }}/${{ inputs.commit_path }}" ]]; then
+          if ! cmp -s "${{ github.workspace }}/${{ inputs.commit_file }}" "${{ github.workspace }}/${{ inputs.commit_path }}"; then
+            echo "File has changed, updating it"
+            mv "${{ github.workspace }}/${{ inputs.commit_file }}" "${{ github.workspace }}/${{ inputs.commit_path }}"
+          else
+            echo "File contents are the same, skipping commit"
+            exit 0
+          fi
+        else
+          echo "File does not exist, committing new file"
+          mv "${{ github.workspace }}/${{ inputs.commit_file }}" "${{ github.workspace }}/${{ inputs.commit_path }}"
+        fi
+
+    - name: Configure Git
+      shell: bash
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Commit and Push Changes
+      shell: bash
+      run: |
+        git add "${{ inputs.commit_path }}"
+        git commit -m "Updated or added file: ${{ inputs.commit_path }}"
+        git push

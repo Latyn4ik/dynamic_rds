@@ -21,7 +21,7 @@ env:
   TARGET_AWS_REGION: "eu-west-1" # The region in which to place the encrypted RDS snapshot and where the new RDS instance will be deployed
   TARGET_OIDC_AWS_ROLE_TO_ASSUME: "arn:aws:iam::962547359624:role/github-oidc-provider-aws"
   TARGET_RDS_ID: "test3R3R3" # The name for the new RDS instance that will be created based on the encrypted RDS snapshot
-  TARGET_KMS_KEY_ARN: "arn:aws:kms:eu-west-1:962547359624:alias/dynamic_rds_key"
+  TARGET_KMS_KEY_ARN: "arn:aws:kms:eu-west-1:962547359624:key/5b477dae-31e6-47ef-b02c-19ff80893776"
 
   
 
@@ -81,7 +81,7 @@ jobs:
           echo "snapshot_id=${SNAPSHOT_ID}" >> $GITHUB_OUTPUT
 
       - name: Wait for snapshot to become available
-        uses: ./.github/actions/wait-for-snapshot
+        uses: ./.github/actions/wait-for-rds-snapshot
         with:
           snapshot_id: ${{ steps.create_snapshot.outputs.snapshot_id }}
           snapshot_region: ${{ env.SOURCE_AWS_REGION }}
@@ -107,14 +107,14 @@ jobs:
           echo "Snapshot copied from source region: ${{ env.SOURCE_AWS_REGION }} to target region ${{ env.TARGET_AWS_REGION }} with new KMS key. Snapshot ID: ${COPIED_SNAPSHOT_ID}"
 
       - name: Wait for re-encrypted snapshot to become available
-        uses: ./.github/actions/wait-for-snapshot
+        uses: ./.github/actions/wait-for-rds-snapshot
         with:
           snapshot_id: ${{ steps.copy_snapshot.outputs.copied_snapshot_id }}
           snapshot_region: ${{ env.TARGET_AWS_REGION }}
 
 
       - name: Delete original snapshot
-        uses: ./.github/actions/delete-snapshot
+        uses: ./.github/actions/delete-rds-snapshot
         with:
           snapshot_id: ${{ steps.create_snapshot.outputs.snapshot_id }}
           snapshot_region: ${{ env.SOURCE_AWS_REGION }}
@@ -178,7 +178,7 @@ jobs:
           echo "manual_snapshot_id=${MANUAL_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
 
       - name: Wait for converted snapshot to become available (Target account)
-        uses: ./.github/actions/wait-for-snapshot
+        uses: ./.github/actions/wait-for-rds-snapshot
         with:
           snapshot_id: ${{ steps.convert_shapshot.outputs.manual_snapshot_id }}
           snapshot_region: ${{ env.TARGET_AWS_REGION }}
@@ -191,41 +191,46 @@ jobs:
           aws-region: ${{ env.TARGET_AWS_REGION }}
 
       - name: Delete original snapshot (Source Account)
-        uses: ./.github/actions/delete-snapshot
+        uses: ./.github/actions/delete-rds-snapshot
         with:
           snapshot_id: ${{ env.SHARED_SNAPSHOT_ID }}
           snapshot_region: ${{ env.TARGET_AWS_REGION }}
 
 
 
-  # create_rds_instance:
-  #   needs: [prepare_job, convert_shared_to_manual_rds_snapshot]
-  #   runs-on: ubuntu-24.04
+  create_rds_instance:
+    needs: [prepare_job, convert_shared_to_manual_rds_snapshot]
+    runs-on: ubuntu-24.04
         
-  #   env:
-  #     SHORT_SHA: ${{ needs.prepare_job.outputs.short_sha }}
+    env:
+      SHORT_SHA: ${{ needs.prepare_job.outputs.short_sha }}
         
 
-  #   steps:
-  #     - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-  #     - name: Generate backend.tf
-  #       run: |
-  #         cat <<EOF > terrafrom-infra/backend.tf
-  #         terraform {
-  #           backend "s3" {
-  #             bucket         = "your-terraform-state-bucket"
-  #             key            = "dynamic_rds/${{ env.SHORT_SHA }}/terraform.tfstate"
-  #             region         = "${{ env.TARGET_AWS_REGION }}"
-  #             dynamodb_table = "mock"
-  #           }
-  #         }
-  #         EOF
+      - name: Generate backend.tf
+        run: |
+          cat <<EOF > terrafrom-infra/${{ env.SHORT_SHA }}/backend.tf
+          terraform {
+            backend "s3" {
+              bucket         = "your-terraform-state-bucket"
+              key            = "dynamic_rds/${{ env.SHORT_SHA }}/terraform.tfstate"
+              region         = "${{ env.TARGET_AWS_REGION }}"
+              dynamodb_table = "mock"
+            }
+          }
+          EOF
 
+      - name: Use Commit File Action
+        uses: ./.github/actions/commit-file
+        with:
+          commit_path: terrafrom-infra/${{ env.SHORT_SHA }}/
+          commit_file: terrafrom-infra/${{ env.SHORT_SHA }}/backend.tf
           
   #     - name: Generate provider.tf
   #       run: |
-  #         cat <<EOF > terrafrom-infra/provider.tf
+  #         cat <<EOF > terrafrom-infra/${{ env.SHORT_SHA }}/provider.tf
   #         provider "aws" {
   #           region = "${{ env.TARGET_AWS_REGION }}"
   #           default_tags {

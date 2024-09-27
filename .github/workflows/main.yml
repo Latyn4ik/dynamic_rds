@@ -48,158 +48,159 @@ jobs:
 
 
 
-  create_and_share_rds_snapshot:
-    needs: [prepare_job]
-    runs-on: ubuntu-24.04
+  # create_and_share_rds_snapshot:
+  #   needs: [prepare_job]
+  #   runs-on: ubuntu-24.04
 
-    env:
-      SHORT_SHA: ${{ needs.prepare_job.outputs.short_sha }}
+  #   env:
+  #     SHORT_SHA: ${{ needs.prepare_job.outputs.short_sha }}
 
-    outputs:
-      shared_snapshot_id: ${{ steps.share_snapshot.outputs.shared_snapshot_id }}
-      shared_snapshot_arn: ${{ steps.share_snapshot.outputs.shared_snapshot_arn }}
+  #   outputs:
+  #     shared_snapshot_id: ${{ steps.share_snapshot.outputs.shared_snapshot_id }}
+  #     shared_snapshot_arn: ${{ steps.share_snapshot.outputs.shared_snapshot_arn }}
     
-    steps:
-      - uses: actions/checkout@v4
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ env.SOURCE_OIDC_AWS_ROLE_TO_ASSUME }}
-          aws-region: ${{ env.SOURCE_AWS_REGION }}
-
-
-      - name: Create RDS snapshot
-        id: create_snapshot
-        run: |
-          SNAPSHOT_ID="${{ env.NEW_RDS_SNAPSHOT_NAME_PREFIX }}-${{ env.SHORT_SHA }}"
-          aws rds create-db-snapshot \
-            --db-snapshot-identifier ${SNAPSHOT_ID} \
-            --db-instance-identifier ${{ env.SOURCE_RDS_ID }} \
-            --region ${{ env.SOURCE_AWS_REGION }}
-
-          echo "snapshot_id=${SNAPSHOT_ID}" >> $GITHUB_OUTPUT
-
-      - name: Wait for snapshot to become available
-        uses: ./.github/actions/wait-for-rds-snapshot
-        with:
-          snapshot_id: ${{ steps.create_snapshot.outputs.snapshot_id }}
-          snapshot_region: ${{ env.SOURCE_AWS_REGION }}
+  #     - name: Configure AWS Credentials
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: ${{ env.SOURCE_OIDC_AWS_ROLE_TO_ASSUME }}
+  #         aws-region: ${{ env.SOURCE_AWS_REGION }}
 
 
-      - name: Copy and re-encrypt RDS snapshot with custom KMS key
-        id: copy_snapshot
-        run: |
-          SOURCE_SNAPSHOT_ID=${{ steps.create_snapshot.outputs.snapshot_id }}
-          SNAPSHOT_ARN=$(aws rds describe-db-snapshots --snapshot-type manual --db-snapshot-identifier "$SOURCE_SNAPSHOT_ID" --query 'DBSnapshots[0].DBSnapshotArn' --output text)
-          COPIED_SNAPSHOT_ID="re-encrypted-${SOURCE_SNAPSHOT_ID}"
+  #     - name: Create RDS snapshot
+  #       id: create_snapshot
+  #       run: |
+  #         SNAPSHOT_ID="${{ env.NEW_RDS_SNAPSHOT_NAME_PREFIX }}-${{ env.SHORT_SHA }}"
+  #         aws rds create-db-snapshot \
+  #           --db-snapshot-identifier ${SNAPSHOT_ID} \
+  #           --db-instance-identifier ${{ env.SOURCE_RDS_ID }} \
+  #           --region ${{ env.SOURCE_AWS_REGION }}
+
+  #         echo "snapshot_id=${SNAPSHOT_ID}" >> $GITHUB_OUTPUT
+
+  #     - name: Wait for snapshot to become available
+  #       uses: ./.github/actions/wait-for-rds-snapshot
+  #       with:
+  #         snapshot_id: ${{ steps.create_snapshot.outputs.snapshot_id }}
+  #         snapshot_region: ${{ env.SOURCE_AWS_REGION }}
+
+
+  #     - name: Copy and re-encrypt RDS snapshot with custom KMS key
+  #       id: copy_snapshot
+  #       run: |
+  #         SOURCE_SNAPSHOT_ID=${{ steps.create_snapshot.outputs.snapshot_id }}
+  #         SNAPSHOT_ARN=$(aws rds describe-db-snapshots --snapshot-type manual --db-snapshot-identifier "$SOURCE_SNAPSHOT_ID" --query 'DBSnapshots[0].DBSnapshotArn' --output text)
+  #         COPIED_SNAPSHOT_ID="re-encrypted-${SOURCE_SNAPSHOT_ID}"
   
-          echo "Copying and re-encrypting snapshot: ${SOURCE_SNAPSHOT_ID} to ${COPIED_SNAPSHOT_ID} with KMS key ${{ env.SOURCE_KMS_KEY_ARN }}"
+  #         echo "Copying and re-encrypting snapshot: ${SOURCE_SNAPSHOT_ID} to ${COPIED_SNAPSHOT_ID} with KMS key ${{ env.SOURCE_KMS_KEY_ARN }}"
           
-          aws rds copy-db-snapshot \
-            --source-db-snapshot-identifier ${SNAPSHOT_ARN} \
-            --target-db-snapshot-identifier ${COPIED_SNAPSHOT_ID} \
-            --kms-key-id ${{ env.SOURCE_KMS_KEY_ARN }} \
-            --region ${{ env.TARGET_AWS_REGION }} \
-            --output json
+  #         aws rds copy-db-snapshot \
+  #           --source-db-snapshot-identifier ${SNAPSHOT_ARN} \
+  #           --target-db-snapshot-identifier ${COPIED_SNAPSHOT_ID} \
+  #           --kms-key-id ${{ env.SOURCE_KMS_KEY_ARN }} \
+  #           --region ${{ env.TARGET_AWS_REGION }} \
+  #           --output json
   
-          echo "copied_snapshot_id=${COPIED_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
-          echo "Snapshot copied from source region: ${{ env.SOURCE_AWS_REGION }} to target region ${{ env.TARGET_AWS_REGION }} with new KMS key. Snapshot ID: ${COPIED_SNAPSHOT_ID}"
+  #         echo "copied_snapshot_id=${COPIED_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
+  #         echo "Snapshot copied from source region: ${{ env.SOURCE_AWS_REGION }} to target region ${{ env.TARGET_AWS_REGION }} with new KMS key. Snapshot ID: ${COPIED_SNAPSHOT_ID}"
 
-      - name: Wait for re-encrypted snapshot to become available
-        uses: ./.github/actions/wait-for-rds-snapshot
-        with:
-          snapshot_id: ${{ steps.copy_snapshot.outputs.copied_snapshot_id }}
-          snapshot_region: ${{ env.TARGET_AWS_REGION }}
-
-
-      - name: Delete original snapshot
-        uses: ./.github/actions/delete-rds-snapshot
-        with:
-          snapshot_id: ${{ steps.create_snapshot.outputs.snapshot_id }}
-          snapshot_region: ${{ env.SOURCE_AWS_REGION }}
+  #     - name: Wait for re-encrypted snapshot to become available
+  #       uses: ./.github/actions/wait-for-rds-snapshot
+  #       with:
+  #         snapshot_id: ${{ steps.copy_snapshot.outputs.copied_snapshot_id }}
+  #         snapshot_region: ${{ env.TARGET_AWS_REGION }}
 
 
-      - name: Share re-encrypted snapshot with target AWS account
-        id: share_snapshot
-        run: |
-          COPIED_SNAPSHOT_ID=${{ steps.copy_snapshot.outputs.copied_snapshot_id }}
+  #     - name: Delete original snapshot
+  #       uses: ./.github/actions/delete-rds-snapshot
+  #       with:
+  #         snapshot_id: ${{ steps.create_snapshot.outputs.snapshot_id }}
+  #         snapshot_region: ${{ env.SOURCE_AWS_REGION }}
+
+
+  #     - name: Share re-encrypted snapshot with target AWS account
+  #       id: share_snapshot
+  #       run: |
+  #         COPIED_SNAPSHOT_ID=${{ steps.copy_snapshot.outputs.copied_snapshot_id }}
     
-          echo "Sharing snapshot: ${COPIED_SNAPSHOT_ID} with account: ${{ env.TARGET_AWS_ACCOUNT_ID }} in region: ${{ env.TARGET_AWS_REGION }}"
+  #         echo "Sharing snapshot: ${COPIED_SNAPSHOT_ID} with account: ${{ env.TARGET_AWS_ACCOUNT_ID }} in region: ${{ env.TARGET_AWS_REGION }}"
     
-          aws rds modify-db-snapshot-attribute \
-            --db-snapshot-identifier ${COPIED_SNAPSHOT_ID} \
-            --attribute-name restore \
-            --values-to-add ${{ env.TARGET_AWS_ACCOUNT_ID }} \
-            --region ${{ env.TARGET_AWS_REGION }}
+  #         aws rds modify-db-snapshot-attribute \
+  #           --db-snapshot-identifier ${COPIED_SNAPSHOT_ID} \
+  #           --attribute-name restore \
+  #           --values-to-add ${{ env.TARGET_AWS_ACCOUNT_ID }} \
+  #           --region ${{ env.TARGET_AWS_REGION }}
   
-          echo "Snapshot ${COPIED_SNAPSHOT_ID} is now shared with account ${TARGET_AWS_ACCOUNT_ID}"
+  #         echo "Snapshot ${COPIED_SNAPSHOT_ID} is now shared with account ${TARGET_AWS_ACCOUNT_ID}"
           
-          SHARED_SNAPSHOT_ARN=$(aws rds describe-db-snapshots --region ${{ env.TARGET_AWS_REGION }} --snapshot-type manual --db-snapshot-identifier "$COPIED_SNAPSHOT_ID" --query 'DBSnapshots[0].DBSnapshotArn' --output text)
-          echo "shared_snapshot_id=${COPIED_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
-          echo "shared_snapshot_arn=${SHARED_SNAPSHOT_ARN}" >> $GITHUB_OUTPUT
+  #         SHARED_SNAPSHOT_ARN=$(aws rds describe-db-snapshots --region ${{ env.TARGET_AWS_REGION }} --snapshot-type manual --db-snapshot-identifier "$COPIED_SNAPSHOT_ID" --query 'DBSnapshots[0].DBSnapshotArn' --output text)
+  #         echo "shared_snapshot_id=${COPIED_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
+  #         echo "shared_snapshot_arn=${SHARED_SNAPSHOT_ARN}" >> $GITHUB_OUTPUT
           
 
 
 
-  convert_shared_to_manual_rds_snapshot:
-    needs: [prepare_job, create_and_share_rds_snapshot]
-    runs-on: ubuntu-24.04
+  # convert_shared_to_manual_rds_snapshot:
+  #   needs: [prepare_job, create_and_share_rds_snapshot]
+  #   runs-on: ubuntu-24.04
 
-    env:
-      SHORT_SHA: ${{ needs.prepare_job.outputs.short_sha }}
-      SHARED_SNAPSHOT_ID: ${{ needs.create_and_share_rds_snapshot.outputs.shared_snapshot_id }}
-      SHARED_SNAPSHOT_ARN: ${{ needs.create_and_share_rds_snapshot.outputs.shared_snapshot_arn }}
-
-
-    outputs:
-      final_snapshot_id: ${{ steps.convert_shapshot.outputs.manual_snapshot_id }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure AWS Credentials in Target Account
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ env.TARGET_OIDC_AWS_ROLE_TO_ASSUME }}
-          aws-region: ${{ env.TARGET_AWS_REGION }}
-
-      - name: Convert shared RDS snapshot to manual (Target account)
-        id: convert_shapshot
-        run: |
-          MANUAL_SNAPSHOT_ID="manual-dynamic-rds-${{ env.SHORT_SHA }}"
-          echo "Converting shared RDS snapshot ${{ env.SHARED_SNAPSHOT_ARN }} to manual snapshot ${MANUAL_SNAPSHOT_ID}"
-
-          aws rds copy-db-snapshot \
-            --source-db-snapshot-identifier ${{ env.SHARED_SNAPSHOT_ARN }} \
-            --target-db-snapshot-identifier ${MANUAL_SNAPSHOT_ID} \
-            --kms-key-id ${{ env.TARGET_KMS_KEY_ARN }}
-
-          echo "manual_snapshot_id=${MANUAL_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
-
-      - name: Wait for converted snapshot to become available (Target account)
-        uses: ./.github/actions/wait-for-rds-snapshot
-        with:
-          snapshot_id: ${{ steps.convert_shapshot.outputs.manual_snapshot_id }}
-          snapshot_region: ${{ env.TARGET_AWS_REGION }}
+  #   env:
+  #     SHORT_SHA: ${{ needs.prepare_job.outputs.short_sha }}
+  #     SHARED_SNAPSHOT_ID: ${{ needs.create_and_share_rds_snapshot.outputs.shared_snapshot_id }}
+  #     SHARED_SNAPSHOT_ARN: ${{ needs.create_and_share_rds_snapshot.outputs.shared_snapshot_arn }}
 
 
-      - name: Configure AWS Credentials in Source Account
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ env.SOURCE_OIDC_AWS_ROLE_TO_ASSUME }}
-          aws-region: ${{ env.TARGET_AWS_REGION }}
+  #   outputs:
+  #     final_snapshot_id: ${{ steps.convert_shapshot.outputs.manual_snapshot_id }}
 
-      - name: Delete original snapshot (Source Account)
-        uses: ./.github/actions/delete-rds-snapshot
-        with:
-          snapshot_id: ${{ env.SHARED_SNAPSHOT_ID }}
-          snapshot_region: ${{ env.TARGET_AWS_REGION }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - name: Configure AWS Credentials in Target Account
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: ${{ env.TARGET_OIDC_AWS_ROLE_TO_ASSUME }}
+  #         aws-region: ${{ env.TARGET_AWS_REGION }}
+
+  #     - name: Convert shared RDS snapshot to manual (Target account)
+  #       id: convert_shapshot
+  #       run: |
+  #         MANUAL_SNAPSHOT_ID="manual-dynamic-rds-${{ env.SHORT_SHA }}"
+  #         echo "Converting shared RDS snapshot ${{ env.SHARED_SNAPSHOT_ARN }} to manual snapshot ${MANUAL_SNAPSHOT_ID}"
+
+  #         aws rds copy-db-snapshot \
+  #           --source-db-snapshot-identifier ${{ env.SHARED_SNAPSHOT_ARN }} \
+  #           --target-db-snapshot-identifier ${MANUAL_SNAPSHOT_ID} \
+  #           --kms-key-id ${{ env.TARGET_KMS_KEY_ARN }}
+
+  #         echo "manual_snapshot_id=${MANUAL_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
+
+  #     - name: Wait for converted snapshot to become available (Target account)
+  #       uses: ./.github/actions/wait-for-rds-snapshot
+  #       with:
+  #         snapshot_id: ${{ steps.convert_shapshot.outputs.manual_snapshot_id }}
+  #         snapshot_region: ${{ env.TARGET_AWS_REGION }}
+
+
+  #     - name: Configure AWS Credentials in Source Account
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: ${{ env.SOURCE_OIDC_AWS_ROLE_TO_ASSUME }}
+  #         aws-region: ${{ env.TARGET_AWS_REGION }}
+
+  #     - name: Delete original snapshot (Source Account)
+  #       uses: ./.github/actions/delete-rds-snapshot
+  #       with:
+  #         snapshot_id: ${{ env.SHARED_SNAPSHOT_ID }}
+  #         snapshot_region: ${{ env.TARGET_AWS_REGION }}
 
 
 
   create_rds_instance:
-    needs: [prepare_job, convert_shared_to_manual_rds_snapshot]
+    # needs: [prepare_job, convert_shared_to_manual_rds_snapshot]
+    needs: [prepare_job]
     runs-on: ubuntu-24.04
         
     env:
@@ -210,8 +211,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Generate backend.tf
+        id: generate_backend_tf
         run: |
-          cat <<EOF > terrafrom-infra/${{ env.SHORT_SHA }}/backend.tf
+          BACKEND_TF_FILE_PATH = "${{ github.workspace }}/terrafrom-infra/${{ env.SHORT_SHA }}/backend.tf"
+          cat <<EOF > ${BACKEND_TF_FILE_PATH}
           terraform {
             backend "s3" {
               bucket         = "your-terraform-state-bucket"
@@ -221,12 +224,13 @@ jobs:
             }
           }
           EOF
+          echo "backend_tf_file_path=${BACKEND_TF_FILE_PATH}" >> $GITHUB_OUTPUT
 
       - name: Use Commit File Action
         uses: ./.github/actions/commit-file
         with:
-          commit_path: terrafrom-infra/${{ env.SHORT_SHA }}/
-          commit_file: terrafrom-infra/${{ env.SHORT_SHA }}/backend.tf
+          commit_path: ${{ github.workspace }}/terrafrom-infra/${{ env.SHORT_SHA }}/
+          commit_file: ${{ steps.generate_backend_tf.outputs.backend_tf_file_path }}
           
   #     - name: Generate provider.tf
   #       run: |

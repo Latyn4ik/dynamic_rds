@@ -16,6 +16,7 @@ env:
   SOURCE_KMS_KEY_ARN: "arn:aws:kms:eu-west-1:637594911457:alias/transit_rds_key"
 
   NEW_RDS_SNAPSHOT_NAME_PREFIX: "transit-rds-snapshot"
+  NEW_RDS_FOLDER_PATH: "terrafrom-infra"
 
   TARGET_AWS_ACCOUNT_ID: "962547359624" # AWS account id with which the encrypted RDS snapshot will be shared and where the new RDS instance will be deployed
   TARGET_AWS_REGION: "eu-west-1" # The region in which to place the encrypted RDS snapshot and where the new RDS instance will be deployed
@@ -210,19 +211,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: test
-        run: |
-          echo "${{ github.workspace }}"
-          ls "${{ github.workspace }}"
 
-      - name: Create nw dir for dynamic RDS
+      - name: Create folder for New Dynamic RDS
+        id: create_new_dynamic_rds_folder
         run: |
-          mkdir -p ${{ github.workspace }}/terrafrom-infra/${{ env.SHORT_SHA }}
+          DYNAMIC_RDS_FOLDER_PATH="${{ github.workspace }}/${{ env.NEW_RDS_FOLDER_PATH }}/${{ env.SHORT_SHA }}"
+          mkdir -p ${DYNAMIC_RDS_FOLDER_PATH}
+          echo "dynamic_rds_folder_path=${DYNAMIC_RDS_FOLDER_PATH}" >> $GITHUB_OUTPUT
+
 
       - name: Generate backend.tf
         id: generate_backend_tf
         run: |
-          BACKEND_TF_FILE_PATH="${{ github.workspace }}/terrafrom-infra/${{ env.SHORT_SHA }}/backend.tf"
+          BACKEND_TF_FILE_PATH="${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}/backend.tf"
           cat <<EOF > ${BACKEND_TF_FILE_PATH}
           terraform {
             backend "s3" {
@@ -238,7 +239,7 @@ jobs:
       - name: Use Commit File Action
         uses: ./.github/actions/commit-file
         with:
-          commit_path: ${{ github.workspace }}/terrafrom-infra/${{ env.SHORT_SHA }}/
+          commit_path: ${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}
           commit_file: ${{ steps.generate_backend_tf.outputs.backend_tf_file_path }}
           
   #     - name: Generate provider.tf

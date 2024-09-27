@@ -217,7 +217,6 @@ jobs:
 
 
   create_rds_instance:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
     # needs: [prepare_job, convert_shared_to_manual_rds_snapshot]
     needs: [prepare_job]
     runs-on: ubuntu-24.04

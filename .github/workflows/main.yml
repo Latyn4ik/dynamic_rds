@@ -44,6 +44,8 @@ env:
 
 
 
+
+
 permissions:
   id-token: write
   contents: write
@@ -279,7 +281,10 @@ jobs:
           echo "name = \"${{ env.TARGET_RDS_CLUSTER_NAME_PREFIX_ID }}\"" >> ${TFVARS_FILE_PATH}
           echo "kms_key_id = \"${{ env.TARGET_KMS_KEY_ARN }}\"" >> ${TFVARS_FILE_PATH}
           echo "vpc_id = \"${{ env.TARGET_ACCOUNT_VPC_ID }}\"" >> ${TFVARS_FILE_PATH}
-          echo "subnets = ${{ env.TARGET_ACCOUNT_SUBNETS }}" >> ${TFVARS_FILE_PATH}
+
+          escaped_subnets=$(echo '${{ env.TARGET_ACCOUNT_SUBNETS }}' | sed 's/"\([^"]*\)"/"\1"/g')
+          echo "subnets = ${escaped_subnets}" >> ${TFVARS_FILE_PATH}
+          
           echo "vpc_security_group_ids = ${{ env.TARGET_ACCOUNT_SECURITY_GROUPS }}" >> ${TFVARS_FILE_PATH}
           echo "snapshot_identifier = \"\"" >> ${TFVARS_FILE_PATH}
           

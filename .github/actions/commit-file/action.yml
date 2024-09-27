@@ -16,22 +16,22 @@ runs:
     #   uses: actions/checkout@v4
 
 
-    - name: Compare file contents
-      id: compare_file
-      shell: bash
-      run: |
-        if [[ -f "${{ inputs.commit_path }}" ]]; then
-          if ! cmp -s "${{ inputs.commit_file }}" "${{ inputs.commit_path }}"; then
-            echo "File has changed, updating it"
-            mv "${{ inputs.commit_file }}" "${{ inputs.commit_path }}"
-          else
-            echo "File contents are the same, skipping commit"
-            exit 0
-          fi
-        else
-          echo "File does not exist, committing new file"
-          mv "${{ inputs.commit_file }}" "${{ inputs.commit_path }}"
-        fi
+    # - name: Compare file contents
+    #   id: compare_file
+    #   shell: bash
+    #   run: |
+    #     if [[ -f "${{ inputs.commit_path }}" ]]; then
+    #       if ! cmp -s "${{ inputs.commit_file }}" "${{ inputs.commit_path }}"; then
+    #         echo "File has changed, updating it"
+    #         mv "${{ inputs.commit_file }}" "${{ inputs.commit_path }}"
+    #       else
+    #         echo "File contents are the same, skipping commit"
+    #         exit 0
+    #       fi
+    #     else
+    #       echo "File does not exist, committing new file"
+    #       mv "${{ inputs.commit_file }}" "${{ inputs.commit_path }}"
+    #     fi
 
     - name: Configure Git
       shell: bash

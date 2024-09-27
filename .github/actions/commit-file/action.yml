@@ -42,7 +42,7 @@ runs:
       - name: Set up authentication
         shell: bash
         run: |
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
 
       - name: Commit and Push Changes
         shell: bash

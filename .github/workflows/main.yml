@@ -213,7 +213,7 @@ jobs:
       - name: Generate backend.tf
         id: generate_backend_tf
         run: |
-          BACKEND_TF_FILE_PATH = "${{ github.workspace }}/terrafrom-infra/${{ env.SHORT_SHA }}/backend.tf"
+          BACKEND_TF_FILE_PATH="${{ github.workspace }}/terrafrom-infra/${{ env.SHORT_SHA }}/backend.tf"
           cat <<EOF > ${BACKEND_TF_FILE_PATH}
           terraform {
             backend "s3" {

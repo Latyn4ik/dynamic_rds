@@ -377,9 +377,12 @@ jobs:
           cd "${{ env.DYNAMIC_RDS_FOLDER_PATH }}"
           terraform init
           terraform destroy -auto-approve
+
           cd ..
           rm -rf "${{ env.DYNAMIC_RDS_FOLDER_PATH }}"
+
           aws rds delete-db-cluster-snapshot --db-cluster-snapshot-identifier ${{ env.FINAL_SNAPSHOT_ID }} --region ${{ env.TARGET_AWS_REGION }}
+          
           git add .
           git commit -m "Remove dynamic RDS folder: ${{ env.DYNAMIC_RDS_FOLDER_PATH }}"
           git push

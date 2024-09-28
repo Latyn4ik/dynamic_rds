@@ -103,9 +103,9 @@ jobs:
         id: create_snapshot
         run: |
           SNAPSHOT_ID="${{ env.NEW_RDS_SNAPSHOT_NAME_PREFIX }}-${{ env.SHORT_SHA }}"
-          aws rds create-db-snapshot \
-            --db-snapshot-identifier ${SNAPSHOT_ID} \
-            --db-instance-identifier ${{ env.SOURCE_RDS_AURORA_CLUSTER_ID }} \
+          aws rds create-db-cluster-snapshot \
+            --db-cluster-snapshot-identifier ${SNAPSHOT_ID} \
+            --db-cluster-identifier ${{ env.SOURCE_RDS_AURORA_CLUSTER_ID }} \
             --region ${{ env.SOURCE_AWS_REGION }}
 
           echo "snapshot_id=${SNAPSHOT_ID}" >> $GITHUB_OUTPUT

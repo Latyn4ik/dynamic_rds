@@ -23,6 +23,7 @@ runs:
     - name: Commit and Push Changes
       shell: bash
       run: |
+        git pull
         cd "${{ inputs.commit_folder }}"
         git add .
         if git diff-index --quiet HEAD; then

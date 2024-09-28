@@ -346,4 +346,4 @@ jobs:
       #   terraform destroy -auto-approve
       #   cd ..
       #   rm -rf "${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}"
-      #   # add deleting of RDS snapshot 
+      #   aws rds delete-db-snapshot --db-snapshot-identifier ${{ env.FINAL_SNAPSHOT_ID }} --region ${{ env.TARGET_AWS_REGION }}

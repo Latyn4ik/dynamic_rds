@@ -28,7 +28,6 @@ data "aws_iam_policy_document" "github_actions_rds_snapshots_and_kms" {
       "rds:ModifyDBSnapshotAttribute"
     ]
 
-    # resources = ["arn:aws:rds:*:${data.aws_caller_identity.current.account_id}:*"]
     resources = ["*"]
   }
 
@@ -47,8 +46,30 @@ data "aws_iam_policy_document" "github_actions_rds_snapshots_and_kms" {
       "kms:RevokeGrant"
     ]
 
-    resources = [
-      "arn:aws:kms:*"
+    resources = ["arn:aws:kms:*"]
+  }
+
+  statement {
+    sid = "TfstateBucket"
+    actions = [
+      "s3:ListBucket",
+      "s3:GetBucketVersioning",
+      "s3:PutObject",
+      "s3:GetObject"
     ]
+
+    resources = ["arn:aws:s3:::*"]
+  }
+
+  statement {
+    sid = "TfstateLockTable"
+    actions = [
+      "dynamodb:PutItem",
+      "dynamodb:GetItem",
+      "dynamodb:DescribeTable",
+      "dynamodb:DeleteItem"
+    ]
+
+    resources = ["arn:aws:dynamodb:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/*"]
   }
 }

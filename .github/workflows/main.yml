@@ -293,7 +293,7 @@ jobs:
           TFVARS_FILE_PATH="${{ steps.create_new_dynamic_rds_folder.outputs.dynamic_rds_folder_path }}/terraform.tfvars"
           
           echo "instance_class = \"${{ inputs.instance_class }}\"" > ${TFVARS_FILE_PATH}
-          echo "name = \"${{ env.TARGET_RDS_CLUSTER_NAME_PREFIX_ID }}\"" >> ${TFVARS_FILE_PATH}
+          echo "name = \"${{ env.TARGET_RDS_CLUSTER_NAME_PREFIX_ID }}-${{ env.SHORT_SHA }}\"" >> ${TFVARS_FILE_PATH}
           echo "kms_key_id = \"${{ env.TARGET_KMS_KEY_ARN }}\"" >> ${TFVARS_FILE_PATH}
           echo "vpc_id = \"${{ env.TARGET_ACCOUNT_VPC_ID }}\"" >> ${TFVARS_FILE_PATH}
 

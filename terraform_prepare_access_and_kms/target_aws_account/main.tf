@@ -18,15 +18,19 @@ resource "aws_iam_policy" "github_actions_rds_snapshots_and_kms" {
 
 data "aws_iam_policy_document" "github_actions_rds_snapshots_and_kms" {
   statement {
-    actions = [
-      "rds:CreateDBSnapshot",
-      "rds:DescribeDBSnapshots",
-      "rds:CopyDBSnapshot",
-      "rds:AddTagsToResource",
-      "rds:ListTagsForResource",
-      "rds:DeleteDBSnapshot",
-      "rds:ModifyDBSnapshotAttribute"
-    ]
+    actions = ["rds:*"]
+
+    resources = ["*"]
+  }
+
+  statement {
+    actions = ["iam:*"]
+
+    resources = ["*"]
+  }
+
+  statement {
+    actions = ["ec2:*"]
 
     resources = ["*"]
   }

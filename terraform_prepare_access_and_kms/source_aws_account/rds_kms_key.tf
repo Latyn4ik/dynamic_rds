@@ -51,10 +51,3 @@ resource "aws_kms_key" "transit" {
 
   provider = aws.target
 }
-
-resource "aws_kms_alias" "transit_rds_key" {
-  name          = "alias/transit_rds_key"
-  target_key_id = aws_kms_key.transit.key_id
-
-  provider = aws.target
-}

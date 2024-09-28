@@ -36,11 +36,11 @@ env:
   SOURCE_AWS_REGION: "eu-central-1" # Region where placed RDS instance from which need create RDS snapshot
   SOURCE_OIDC_AWS_ROLE_TO_ASSUME: "arn:aws:iam::637594911457:role/github-oidc-provider-aws"
   SOURCE_RDS_ID: "dev-portal-postgres-main-0" # Name of RDS instance from which the snapshot will be taken
-  SOURCE_KMS_KEY_ARN: "arn:aws:kms:eu-west-1:637594911457:alias/transit_rds_key"
+  SOURCE_KMS_KEY_ARN: "arn:aws:kms:eu-west-1:637594911457:key/eeff02bf-73e8-4923-bd37-1f06ebe53b46"
 
   NEW_RDS_SNAPSHOT_NAME_PREFIX: "transit-rds-snapshot"
-  NEW_RDS_FOLDER_PATH: "terrafrom-infra"
-  DYNAMIC_RDS_INSTANCE_TEMPLATE_PATH: "dynamic_rds_instance_template"
+  NEW_RDS_FOLDER_PATH: "terrafrom-infra" # Folder where will be generate New Dynamic RDS Terraform files
+  DYNAMIC_RDS_INSTANCE_TEMPLATE_PATH: "dynamic_rds_instance_template" # the folder from which the Terraform files for the new RDS Aurora cluster will be copied 
 
   TARGET_AWS_ACCOUNT_ID: "962547359624" # AWS account id with which the encrypted RDS snapshot will be shared and where the new RDS instance will be deployed
   TARGET_AWS_REGION: "eu-west-1" # The region in which to place the encrypted RDS snapshot and where the new RDS instance will be deployed

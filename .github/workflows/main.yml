@@ -259,7 +259,7 @@ jobs:
               bucket         = "${{ env.TARGET_TFSTATE_BUCKET }}"
               key            = "dynamic_rds/${{ env.SHORT_SHA }}/terraform.tfstate"
               region         = "${{ env.TARGET_AWS_REGION }}"
-              dynamodb_table = "${{ env.TARGET_TFSTATE_DYNAMODB_TABLE }}"
+              # dynamodb_table = "${{ env.TARGET_TFSTATE_DYNAMODB_TABLE }}"
             }
           }
           EOF

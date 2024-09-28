@@ -48,9 +48,13 @@ resource "aws_kms_key" "transit" {
   deletion_window_in_days = 7
 
   policy = data.aws_iam_policy_document.transit_kms_key_policy.json
+
+  provider = aws.target
 }
 
 resource "aws_kms_alias" "transit_rds_key" {
   name          = "alias/transit_rds_key"
   target_key_id = aws_kms_key.transit.key_id
+
+  provider = aws.target
 }

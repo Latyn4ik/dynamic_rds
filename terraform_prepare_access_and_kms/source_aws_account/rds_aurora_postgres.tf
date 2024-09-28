@@ -21,10 +21,10 @@ module "aurora_instance" {
   manage_master_user_password = true
 
   ### Networking ###
-  vpc_id                 = var.vpc_id
+  vpc_id                 = var.source_region_vpc_id
   create_db_subnet_group = true
   db_subnet_group_name   = "${local.aurora_name}-db-subnet-group"
-  subnets                = []
+  subnets                = var.source_region_subnets
   vpc_security_group_ids = [""]
 
   ### Storage ###
@@ -44,4 +44,8 @@ module "aurora_instance" {
   enabled_cloudwatch_logs_exports = ["postgresql"]
 
   tags = {}
+
+  providers = {
+    aws = aws.source
+  }
 }

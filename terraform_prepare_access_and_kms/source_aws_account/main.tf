@@ -7,12 +7,18 @@ module "github-oidc" {
 
   repositories              = ["repo:Latyn4ik/dynamic_rds:*"]
   oidc_role_attach_policies = [aws_iam_policy.github_actions_rds_snapshots_and_kms.arn]
+
+  providers = {
+    aws = aws.source
+  }
 }
 
 
 resource "aws_iam_policy" "github_actions_rds_snapshots_and_kms" {
   name   = "github-actions-rds-snapshots-and-kms"
   policy = data.aws_iam_policy_document.github_actions_rds_snapshots_and_kms.json
+
+  provider = aws.source
 }
 
 

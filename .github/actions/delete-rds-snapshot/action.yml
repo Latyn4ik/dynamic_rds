@@ -15,6 +15,6 @@ runs:
     - name: Delete RDS snapshot
       shell: bash
       run: |
-        aws rds delete-db-snapshot \
-          --db-snapshot-identifier ${{ inputs.snapshot_id }} \
+        aws rds delete-db-cluster-snapshot \
+          --db-cluster-snapshot-identifier ${{ inputs.snapshot_id }} \
           --region ${{ inputs.snapshot_region }}

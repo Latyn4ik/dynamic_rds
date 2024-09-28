@@ -25,13 +25,21 @@ resource "aws_iam_policy" "github_actions_rds_snapshots_and_kms" {
 data "aws_iam_policy_document" "github_actions_rds_snapshots_and_kms" {
   statement {
     actions = [
-      "rds:CreateDBSnapshot",
-      "rds:DescribeDBSnapshots",
-      "rds:CopyDBSnapshot",
+      # "rds:CreateDBSnapshot",
+      # "rds:DescribeDBSnapshots",
+      # "rds:CopyDBSnapshot",
+      # "rds:AddTagsToResource",
+      # "rds:ListTagsForResource",
+      # "rds:DeleteDBSnapshot",
+      # "rds:ModifyDBSnapshotAttribute"
+
+      "rds:CreateDBClusterSnapshot",
+      "rds:DescribeDBClusterSnapshots",
+      "rds:CopyDBClusterSnapshot",
       "rds:AddTagsToResource",
       "rds:ListTagsForResource",
-      "rds:DeleteDBSnapshot",
-      "rds:ModifyDBSnapshotAttribute"
+      "rds:DeleteDBClusterSnapshot",
+      "rds:ModifyDBClusterSnapshotAttribute"
     ]
 
     resources = ["arn:aws:rds:*:${data.aws_caller_identity.current.account_id}:*"]

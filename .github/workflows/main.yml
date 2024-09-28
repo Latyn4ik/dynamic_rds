@@ -121,14 +121,14 @@ jobs:
         id: copy_snapshot
         run: |
           SOURCE_SNAPSHOT_ID=${{ steps.create_snapshot.outputs.snapshot_id }}
-          SNAPSHOT_ARN=$(aws rds describe-db-snapshots --snapshot-type manual --db-snapshot-identifier "$SOURCE_SNAPSHOT_ID" --query 'DBSnapshots[0].DBSnapshotArn' --output text)
+          SNAPSHOT_ARN=$(aws rds describe-db-cluster-snapshots --snapshot-type manual --db-cluster-snapshot-identifier "$SOURCE_SNAPSHOT_ID" --query 'DBSnapshots[0].DBSnapshotArn' --output text)
           COPIED_SNAPSHOT_ID="re-encrypted-${SOURCE_SNAPSHOT_ID}"
   
           echo "Copying and re-encrypting snapshot: ${SOURCE_SNAPSHOT_ID} to ${COPIED_SNAPSHOT_ID} with KMS key ${{ env.SOURCE_KMS_KEY_ARN }}"
           
-          aws rds copy-db-snapshot \
-            --source-db-snapshot-identifier ${SNAPSHOT_ARN} \
-            --target-db-snapshot-identifier ${COPIED_SNAPSHOT_ID} \
+          aws rds copy-db-cluster-snapshot \
+            --source-db-cluster-snapshot-identifier ${SNAPSHOT_ARN} \
+            --target-db-cluster-snapshot-identifier ${COPIED_SNAPSHOT_ID} \
             --kms-key-id ${{ env.SOURCE_KMS_KEY_ARN }} \
             --region ${{ env.TARGET_AWS_REGION }} \
             --output json
@@ -157,15 +157,15 @@ jobs:
     
           echo "Sharing snapshot: ${COPIED_SNAPSHOT_ID} with account: ${{ env.TARGET_AWS_ACCOUNT_ID }} in region: ${{ env.TARGET_AWS_REGION }}"
     
-          aws rds modify-db-snapshot-attribute \
-            --db-snapshot-identifier ${COPIED_SNAPSHOT_ID} \
+          aws rds modify-db-cluster-snapshot-attribute \
+            --db-cluster-snapshot-identifier ${COPIED_SNAPSHOT_ID} \
             --attribute-name restore \
             --values-to-add ${{ env.TARGET_AWS_ACCOUNT_ID }} \
             --region ${{ env.TARGET_AWS_REGION }}
   
           echo "Snapshot ${COPIED_SNAPSHOT_ID} is now shared with account ${TARGET_AWS_ACCOUNT_ID}"
           
-          SHARED_SNAPSHOT_ARN=$(aws rds describe-db-snapshots --region ${{ env.TARGET_AWS_REGION }} --snapshot-type manual --db-snapshot-identifier "$COPIED_SNAPSHOT_ID" --query 'DBSnapshots[0].DBSnapshotArn' --output text)
+          SHARED_SNAPSHOT_ARN=$(aws rds describe-db-cluster-snapshots --region ${{ env.TARGET_AWS_REGION }} --snapshot-type manual --db-cluster-snapshot-identifier "$COPIED_SNAPSHOT_ID" --query 'DBSnapshots[0].DBSnapshotArn' --output text)
           echo "shared_snapshot_id=${COPIED_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
           echo "shared_snapshot_arn=${SHARED_SNAPSHOT_ARN}" >> $GITHUB_OUTPUT
           
@@ -200,9 +200,9 @@ jobs:
           MANUAL_SNAPSHOT_ID="manual-dynamic-rds-${{ env.SHORT_SHA }}"
           echo "Converting shared RDS snapshot ${{ env.SHARED_SNAPSHOT_ARN }} to manual snapshot ${MANUAL_SNAPSHOT_ID}"
 
-          aws rds copy-db-snapshot \
-            --source-db-snapshot-identifier ${{ env.SHARED_SNAPSHOT_ARN }} \
-            --target-db-snapshot-identifier ${MANUAL_SNAPSHOT_ID} \
+          aws rds copy-db-cluster-snapshot \
+            --source-db-cluster-snapshot-identifier ${{ env.SHARED_SNAPSHOT_ARN }} \
+            --target-db-cluster-snapshot-identifier ${MANUAL_SNAPSHOT_ID} \
             --kms-key-id ${{ env.TARGET_KMS_KEY_ARN }}
 
           echo "manual_snapshot_id=${MANUAL_SNAPSHOT_ID}" >> $GITHUB_OUTPUT

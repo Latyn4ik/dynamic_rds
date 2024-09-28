@@ -26,7 +26,7 @@ runs:
           echo "Checking status of snapshot: $SNAPSHOT_ID"
           STATUS=$(aws rds describe-db-cluster-snapshots \
             --db-cluster-snapshot-identifier ${SNAPSHOT_ID} \
-            --query 'DBSnapshots[0].Status' \
+            --query 'DBClusterSnapshots[0].Status' \
             --region ${{ inputs.snapshot_region }} \
             --output text)
           echo "Current status: $STATUS"

@@ -353,7 +353,7 @@ jobs:
         
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -375,6 +375,7 @@ jobs:
           git pull
 
           cd "${{ env.DYNAMIC_RDS_FOLDER_PATH }}"
+          terraform init
           terraform destroy -auto-approve
           cd ..
           rm -rf "${{ env.DYNAMIC_RDS_FOLDER_PATH }}"

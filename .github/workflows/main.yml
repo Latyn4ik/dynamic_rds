@@ -353,7 +353,18 @@ jobs:
         
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.6
 
+
+      - name: Configure AWS Credentials in Target Account
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.TARGET_OIDC_AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.TARGET_AWS_REGION }}
 
       - name: Terraform Destroy and Cleanup
         run: |

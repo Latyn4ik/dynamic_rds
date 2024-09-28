@@ -1,8 +1,8 @@
 name: Dynamic RDS Aurora
 
 on:
-  push:
-    branches: [ "main" ]
+  # push:
+  #   branches: [ "main" ]
   # pull_request:
   #   branches: [ "main" ]
 
@@ -136,7 +136,7 @@ jobs:
           echo "copied_snapshot_id=${COPIED_SNAPSHOT_ID}" >> $GITHUB_OUTPUT
           echo "Snapshot copied from source region: ${{ env.SOURCE_AWS_REGION }} to target region ${{ env.TARGET_AWS_REGION }} with new KMS key. Snapshot ID: ${COPIED_SNAPSHOT_ID}"
 
-      - name: Wait for re-encrypted RS cluster snapshot to become available
+      - name: Wait for re-encrypted RDS cluster snapshot to become available
         uses: ./.github/actions/wait-for-rds-snapshot
         with:
           snapshot_id: ${{ steps.copy_snapshot.outputs.copied_snapshot_id }}

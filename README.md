@@ -12,6 +12,8 @@ This GitHub Actions pipeline dynamically sets up an RDS Aurora cluster by perfor
 
 This setup allows for streamlined RDS Aurora cluster creation and management with Terraform.
 
+## Concept 
+![image info](./dynamic_rds_aurora_cluster_conceptual_schema.jpg)
 
 ## Setup guide:
 1. Go to Settings -> Environments -> New environment -> fill name: **rds_destroy** -> Configure environment

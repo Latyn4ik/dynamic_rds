@@ -30,6 +30,13 @@ data "aws_iam_policy_document" "github_actions_rds_snapshots_and_kms" {
   }
 
   statement {
+    actions = ["secretsmanager:*"]
+
+    resources = ["*"]
+  }
+
+
+  statement {
     actions = ["ec2:*"]
 
     resources = ["*"]

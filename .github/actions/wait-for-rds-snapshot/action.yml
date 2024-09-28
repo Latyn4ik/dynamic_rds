@@ -16,7 +16,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Wait for snapshot to become available
+    - name: Wait for RDS Cluster snapshot to become available
       shell: bash
       run: |
         SNAPSHOT_ID="${{ inputs.snapshot_id }}"
@@ -35,4 +35,4 @@ runs:
             sleep $WAIT_SECONDS
           fi
         done
-        echo "Snapshot ${SNAPSHOT_ID} is now available!"
+        echo "RDS Cluster Snapshot ${SNAPSHOT_ID} is now available!"

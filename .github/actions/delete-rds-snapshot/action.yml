@@ -1,18 +1,18 @@
-name: Delete Snapshot
-description: Deletes a specified RDS snapshot.
+name: Delete RDS Cluster Snapshot
+description: Deletes a specified RDS Cluster snapshot.
 
 inputs:
   snapshot_id:
-    description: 'The ID of the snapshot to delete.'
+    description: 'The ID of the RDS cluster snapshot to delete.'
     required: true
   snapshot_region:
-    description: 'Region where placed RDS snapshot.'
+    description: 'Region where placed RDS cluster snapshot.'
     required: true
 
 runs:
   using: "composite"
   steps:
-    - name: Delete RDS snapshot
+    - name: Delete RDS cluster snapshot
       shell: bash
       run: |
         aws rds delete-db-cluster-snapshot \

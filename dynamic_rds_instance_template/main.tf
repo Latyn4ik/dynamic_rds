@@ -7,7 +7,8 @@ module "aurora_instance" {
   engine_version = var.engine_version
   instance_class = var.instance_class
   instances      = var.instances
-
+  
+  snapshot_identifier = var.snapshot_identifier
 
   ### Credentials ###
   master_username             = var.master_username

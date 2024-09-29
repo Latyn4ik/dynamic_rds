@@ -27,6 +27,13 @@ module "aurora_instance" {
   subnets                = var.source_region_subnets
   vpc_security_group_ids = [""]
 
+  security_group_rules = {
+    vpc_ingress = {
+      type        = "ingress"
+      cidr_blocks = ["10.20.0.0/16"]
+    }
+  }
+
   ### Storage ###
   storage_encrypted = true
 

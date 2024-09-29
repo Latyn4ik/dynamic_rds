@@ -1,11 +1,6 @@
-name: Dynamic RDS Aurora
+name: Dynamic RDS Aurora cluster
 
 on:
-  # push:
-  #   branches: [ "main" ]
-  # pull_request:
-  #   branches: [ "main" ]
-
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
@@ -34,24 +29,24 @@ on:
 
 env:
   SOURCE_AWS_REGION: "eu-central-1" # Region where placed RDS Cluster from which need create RDS snapshot
-  SOURCE_OIDC_AWS_ROLE_TO_ASSUME: "arn:aws:iam::637594911457:role/github-oidc-provider-aws"
+  SOURCE_OIDC_AWS_ROLE_TO_ASSUME: "arn:aws:iam::637594911457:role/github-oidc-provider-aws" # Role that assumed by OIDC provider for access to Source AWS account
   SOURCE_RDS_AURORA_CLUSTER_ID: "source-aurora-postgres-test" # Name of RDS Cluster from which the snapshot will be taken
-  SOURCE_KMS_KEY_ARN: "arn:aws:kms:eu-west-1:637594911457:key/eeff02bf-73e8-4923-bd37-1f06ebe53b46"
+  SOURCE_KMS_KEY_ARN: "arn:aws:kms:eu-west-1:637594911457:key/eeff02bf-73e8-4923-bd37-1f06ebe53b46" # KMS key that used for re-encrypt RDS cluster snapshot for sharing with Target AWS account
 
 
   TARGET_AWS_ACCOUNT_ID: "962547359624" # AWS account id with which the encrypted RDS snapshot will be shared and where the new RDS Cluster will be deployed
   TARGET_AWS_REGION: "eu-west-1" # The region in which to place the encrypted RDS snapshot and where the new RDS Cluster will be deployed
-  TARGET_TFSTATE_BUCKET: "test-oidc-access-prepare-tfstate-target-account"
+  TARGET_TFSTATE_BUCKET: "test-oidc-access-prepare-tfstate-target-account" # S3 bucket in Target AWS account where will be saved dynamic RDS clusters terraform states
   TARGET_TFSTATE_DYNAMODB_TABLE: "mock"
-  TARGET_OIDC_AWS_ROLE_TO_ASSUME: "arn:aws:iam::962547359624:role/github-oidc-provider-aws"
+  TARGET_OIDC_AWS_ROLE_TO_ASSUME: "arn:aws:iam::962547359624:role/github-oidc-provider-aws" # Role that assumed by OIDC provider for access to Target AWS account
   TARGET_RDS_CLUSTER_NAME_PREFIX_ID: "target-dynamic-aurora" # The name for the new RDS Cluster that will be created based on the encrypted RDS snapshot
-  TARGET_KMS_KEY_ARN: "arn:aws:kms:eu-west-1:962547359624:key/5b477dae-31e6-47ef-b02c-19ff80893776"
-  TARGET_ACCOUNT_VPC_ID: "vpc-02ee475c7a8ef19fd" # VPC ID in the target account whe must be deployed new RDS Aurora cluster
-  TARGET_ACCOUNT_SUBNETS: '["subnet-0b0acd17103b2938c", "subnet-037af5306c394acb4", "subnet-0f41bf8df8165e9a7"]'
-  TARGET_ACCOUNT_SECURITY_GROUPS: '[""]'
+  TARGET_KMS_KEY_ARN: "arn:aws:kms:eu-west-1:962547359624:key/5b477dae-31e6-47ef-b02c-19ff80893776" # KMS key that will be used for re-encrypt snapshot from Source AWS account and used for new Dynamic RDS Aurora clusters
+  TARGET_ACCOUNT_VPC_ID: "vpc-02ee475c7a8ef19fd" # VPC ID in the Target AWS account whe must be deployed new RDS Aurora cluster
+  TARGET_ACCOUNT_SUBNETS: '["subnet-0b0acd17103b2938c", "subnet-037af5306c394acb4", "subnet-0f41bf8df8165e9a7"]' # Subnets in Target AWS account that used for crating subnet groups for Dynamic RDS Aurora clusters
+  TARGET_ACCOUNT_SECURITY_GROUPS: '[""]' # Security groups that will be attached to Dynamic RDS Aurora cluster 
 
 
-  NEW_RDS_SNAPSHOT_NAME_PREFIX: "transit-rds-snapshot"
+  NEW_RDS_SNAPSHOT_NAME_PREFIX: "transit-rds-snapshot" # Name prefix that will be used for new RDS Aurora cluster resources
   NEW_RDS_FOLDER_PATH: "terraform-infra" # Folder where will be generate New Dynamic RDS Terraform files
   DYNAMIC_RDS_INSTANCE_TEMPLATE_PATH: "dynamic_rds_instance_template" # the folder from which the Terraform files for the new RDS Aurora cluster will be copied 
 
@@ -230,7 +225,6 @@ jobs:
 
   create_rds_cluster:
     needs: [prepare_job, convert_shared_to_manual_rds_snapshot]
-    # needs: [prepare_job]
     runs-on: ubuntu-24.04
         
     env:
@@ -279,7 +273,8 @@ jobs:
             default_tags {
               tags = {
                 Terraform = true
-                Solution = "Github-Dynamic-RDS"
+                Solution = "Github-Actions-Dynamic-RDS-Aurora-cluster"
+                Cluster = "${{ env.TARGET_RDS_CLUSTER_NAME_PREFIX_ID }}-${{ env.SHORT_SHA }}"
               }
             }
           }
